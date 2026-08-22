@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/db.json
+
+# Local logs and temporary files
+*.log
+tmp/
+.tmp/
+.codex-temp/
+
+# Generated build folders in source apps
+apps/*/build/
+
+# Generated deployment archives
+dist-packages/
+*.zip
+*.tgz
+*.tar
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,922 @@
+.parent-dashboard-page {
+  min-height: 100vh;
+  padding: 24px 18px 40px;
+  color: #102a4c;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(212, 167, 54, 0.2), transparent 26%),
+    radial-gradient(circle at 92% 18%, rgba(31, 79, 135, 0.16), transparent 24%),
+    linear-gradient(135deg, #f7f3ea 0%, #f8fbff 48%, #fffaf0 100%);
+}
+
+.parent-dashboard-page * {
+  box-sizing: border-box;
+}
+
+.parent-dashboard-shell {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+
+.parent-topbar,
+.parent-hero-card,
+.parent-child-summary,
+.parent-dashboard-section,
+.parent-sidebar-card,
+.parent-empty-state,
+.parent-alert {
+  border: 1px solid rgba(204, 217, 234, 0.92);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 50px rgba(16, 42, 76, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.parent-topbar {
+  min-height: 72px;
+  border-radius: 24px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.parent-brand-block,
+.parent-topbar-actions,
+.parent-profile-pill,
+.parent-child-badges,
+.parent-report-actions,
+.parent-payment-panel,
+.parent-section-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.parent-brand-mark,
+.parent-module-icon,
+.parent-profile-pill span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.parent-brand-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #102a4c, #1f4f87);
+  box-shadow: 0 12px 24px rgba(16, 42, 76, 0.18);
+}
+
+.parent-brand-block strong,
+.parent-profile-pill strong {
+  display: block;
+  color: #102a4c;
+}
+
+.parent-brand-block small {
+  display: block;
+  color: #6a7890;
+  font-weight: 700;
+}
+
+.parent-notification-pill,
+.parent-logout-btn,
+.parent-sidebar nav button,
+.parent-module-card,
+.parent-primary-action,
+.parent-secondary-action,
+.parent-comment-form button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.parent-notification-pill,
+.parent-logout-btn,
+.parent-profile-pill,
+.parent-primary-link,
+.parent-primary-action,
+.parent-secondary-action {
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.parent-notification-pill,
+.parent-profile-pill {
+  border: 1px solid #d8e3f1;
+  background: #f8fbff;
+  color: #102a4c;
+}
+
+.parent-notification-pill span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  margin-left: 6px;
+  background: #d4a736;
+  color: #102a4c;
+}
+
+.parent-profile-pill span {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #102a4c;
+  color: #fff;
+  font-weight: 900;
+}
+
+.parent-logout-btn {
+  border: none;
+  color: #fff;
+  background: #102a4c;
+}
+
+.parent-hero-card {
+  border-radius: 30px;
+  padding: clamp(22px, 4vw, 36px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  overflow: hidden;
+  position: relative;
+}
+
+.parent-hero-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -70px -110px auto;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  background: rgba(212, 167, 54, 0.18);
+}
+
+.parent-kicker,
+.parent-section-kicker {
+  color: #a77612;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.parent-hero-card h1,
+.parent-child-summary h2,
+.parent-section-header h2 {
+  margin: 6px 0;
+  color: #102a4c;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.08;
+}
+
+.parent-hero-card h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+}
+
+.parent-hero-card p,
+.parent-section-header p,
+.parent-child-summary p,
+.parent-empty-state p,
+.parent-promotion-card p,
+.parent-transport-card p,
+.parent-update-card p,
+.parent-notice-card p,
+.parent-activity-card p {
+  margin: 0;
+  color: #5d6f89;
+  line-height: 1.6;
+}
+
+.parent-primary-link,
+.parent-primary-action {
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, #102a4c 0%, #1f4f87 100%);
+  box-shadow: 0 14px 26px rgba(16, 42, 76, 0.18);
+}
+
+.parent-secondary-action {
+  border: 1px solid #cddbed;
+  color: #102a4c;
+  background: #fff;
+}
+
+.parent-alert {
+  border-radius: 18px;
+  padding: 14px 18px;
+  font-weight: 700;
+}
+
+.parent-alert.error {
+  border-color: #fecaca;
+  color: #991b1b;
+  background: #fff1f1;
+}
+
+.parent-alert.success {
+  border-color: #bbf7d0;
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.parent-alert.neutral {
+  color: #334155;
+  background: #f8fbff;
+}
+
+.parent-dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.parent-sidebar {
+  position: sticky;
+  top: 14px;
+}
+
+.parent-sidebar-card {
+  border-radius: 24px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.parent-sidebar-card nav {
+  display: grid;
+  gap: 8px;
+}
+
+.parent-sidebar nav button {
+  width: 100%;
+  border: 1px solid #d8e3f1;
+  border-radius: 14px;
+  padding: 11px 13px;
+  color: #102a4c;
+  font-weight: 800;
+  text-align: left;
+  background: #f8fbff;
+}
+
+.parent-main-content {
+  display: grid;
+  gap: 18px;
+}
+
+.parent-child-summary {
+  border-radius: 26px;
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
+.parent-child-copy h2 {
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+}
+
+.parent-child-switcher {
+  width: min(420px, 100%);
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+  color: #102a4c;
+  font-weight: 800;
+}
+
+.parent-child-switcher select,
+.parent-report-actions select,
+.parent-payment-panel select,
+.parent-comment-form input {
+  width: 100%;
+  border: 1px solid #cddbed;
+  border-radius: 14px;
+  padding: 11px 13px;
+  color: #102a4c;
+  background: #fff;
+  font: inherit;
+}
+
+.parent-child-badges {
+  justify-content: flex-end;
+  max-width: 430px;
+}
+
+.parent-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.parent-status-badge.success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.parent-status-badge.warning {
+  color: #8a5a0a;
+  background: #fef3c7;
+}
+
+.parent-status-badge.danger {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.parent-status-badge.neutral {
+  color: #334155;
+  background: #e8eef7;
+}
+
+.parent-summary-grid,
+.parent-module-grid,
+.parent-details-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.parent-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.parent-summary-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.parent-stat-card,
+.parent-module-card,
+.parent-homework-card,
+.parent-update-card,
+.parent-notice-card,
+.parent-activity-card,
+.parent-promotion-card,
+.parent-transport-card,
+.parent-invoice-card,
+.parent-fee-highlight,
+.parent-payment-panel,
+.parent-details-grid > div,
+.parent-summary-strip > div {
+  border: 1px solid #d8e3f1;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(16, 42, 76, 0.06);
+}
+
+.parent-stat-card {
+  border-radius: 20px;
+  padding: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.parent-stat-card span,
+.parent-module-card small,
+.parent-details-grid span,
+.parent-fee-highlight span,
+.parent-homework-card span,
+.parent-transport-card span,
+.parent-activity-card span,
+.parent-update-card small,
+.parent-summary-strip span {
+  color: #687b93;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.parent-stat-card strong {
+  color: #102a4c;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+}
+
+.parent-stat-card p {
+  margin: 0;
+  color: #687b93;
+  font-size: 0.9rem;
+}
+
+.parent-stat-card.gold {
+  background: linear-gradient(135deg, #fff8dc, #ffffff);
+}
+
+.parent-stat-card.green {
+  background: linear-gradient(135deg, #ecfdf3, #ffffff);
+}
+
+.parent-stat-card.amber {
+  background: linear-gradient(135deg, #fff6df, #ffffff);
+}
+
+.parent-stat-card.blue,
+.parent-stat-card.navy {
+  background: linear-gradient(135deg, #edf6ff, #ffffff);
+}
+
+.parent-stat-card.red {
+  background: linear-gradient(135deg, #fff1f1, #ffffff);
+}
+
+.parent-module-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.parent-module-card {
+  border-radius: 22px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+}
+
+.parent-module-card:hover,
+.parent-sidebar nav button:hover,
+.parent-primary-link:hover,
+.parent-primary-action:hover,
+.parent-secondary-action:hover {
+  transform: translateY(-1px);
+}
+
+.parent-primary-action:disabled,
+.parent-secondary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
+.parent-module-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  color: #102a4c;
+  background: #f8e8a8;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.parent-module-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.parent-module-copy strong {
+  color: #102a4c;
+}
+
+.parent-module-action {
+  color: #1f4f87;
+  font-weight: 900;
+}
+
+.parent-dashboard-section {
+  scroll-margin-top: 18px;
+  border-radius: 26px;
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.parent-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.parent-section-header h2 {
+  font-size: clamp(1.45rem, 2.5vw, 2rem);
+}
+
+.parent-fee-highlight {
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  background: linear-gradient(135deg, #102a4c 0%, #1f4f87 76%, #d4a736 180%);
+  color: #fff;
+}
+
+.parent-fee-highlight span,
+.parent-fee-highlight strong {
+  color: #fff;
+}
+
+.parent-fee-highlight > div:first-child {
+  display: grid;
+  gap: 9px;
+}
+
+.parent-fee-highlight > div:first-child strong {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.parent-fee-metrics {
+  min-width: min(360px, 100%);
+  display: grid;
+  gap: 10px;
+}
+
+.parent-fee-metrics span {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.parent-details-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.parent-details-grid > div {
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.parent-details-grid strong {
+  color: #102a4c;
+}
+
+.parent-payment-panel {
+  border-radius: 20px;
+  padding: 16px;
+  align-items: flex-end;
+}
+
+.parent-payment-panel label {
+  display: grid;
+  gap: 6px;
+  min-width: min(260px, 100%);
+  color: #102a4c;
+  font-weight: 800;
+}
+
+.parent-invoice-list {
+  display: grid;
+  gap: 12px;
+}
+
+.parent-invoice-list-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.parent-invoice-list-head h3 {
+  margin: 0 0 4px;
+  color: #102a4c;
+  font-size: 1.15rem;
+}
+
+.parent-invoice-list-head p {
+  margin: 0;
+  color: #687b93;
+  line-height: 1.5;
+}
+
+.parent-invoice-card {
+  border-radius: 22px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, auto) minmax(280px, 1.35fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.parent-invoice-meta,
+.parent-invoice-amount {
+  display: grid;
+  gap: 6px;
+}
+
+.parent-invoice-meta span,
+.parent-invoice-meta small,
+.parent-invoice-amount span {
+  color: #687b93;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.parent-invoice-meta strong,
+.parent-invoice-amount strong {
+  color: #102a4c;
+}
+
+.parent-invoice-amount strong {
+  font-size: 1.25rem;
+}
+
+.parent-payment-panel.compact {
+  padding: 12px;
+  box-shadow: none;
+  background: #f8fbff;
+}
+
+.parent-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.parent-data-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #d8e3f1;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.parent-data-table th,
+.parent-data-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #e6edf6;
+  text-align: left;
+  vertical-align: top;
+}
+
+.parent-data-table th {
+  color: #102a4c;
+  background: #f2f6fb;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.parent-data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.parent-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.parent-homework-card,
+.parent-update-card,
+.parent-notice-card,
+.parent-activity-card,
+.parent-promotion-card,
+.parent-transport-card {
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.parent-homework-card,
+.parent-update-card,
+.parent-transport-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+
+.parent-homework-card h3,
+.parent-update-card h3,
+.parent-transport-card h3,
+.parent-activity-card h3 {
+  margin: 4px 0;
+  color: #102a4c;
+}
+
+.parent-homework-status {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.parent-report-actions {
+  justify-content: flex-end;
+}
+
+.parent-report-actions select {
+  min-width: 230px;
+}
+
+.parent-promotion-card {
+  display: grid;
+  gap: 12px;
+  background: #f8fbff;
+}
+
+.parent-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.parent-summary-strip > div {
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.parent-transport-card {
+  background: linear-gradient(135deg, #f8fbff, #fff);
+}
+
+.parent-notice-card {
+  background: #fff8dc;
+}
+
+.parent-activity-main {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.parent-activity-main img {
+  width: 160px;
+  height: 110px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid #d8e3f1;
+}
+
+.parent-comment-box {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e6edf6;
+  display: grid;
+  gap: 8px;
+}
+
+.parent-comment-box > p {
+  background: #f8fbff;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.parent-comment-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.parent-comment-form button {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  color: #fff;
+  font-weight: 800;
+  background: #102a4c;
+}
+
+.parent-empty-state {
+  border-radius: 18px;
+  padding: 16px;
+  color: #102a4c;
+  background: #f8fbff;
+}
+
+.parent-empty-state strong {
+  display: block;
+}
+
+.parent-empty-state p {
+  margin-top: 5px;
+}
+
+@media (max-width: 1100px) {
+  .parent-dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .parent-sidebar {
+    position: static;
+  }
+
+  .parent-sidebar-card nav {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .parent-sidebar nav button {
+    min-width: max-content;
+    text-align: center;
+  }
+
+  .parent-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .parent-invoice-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .parent-dashboard-page {
+    padding: 14px 12px 28px;
+  }
+
+  .parent-topbar,
+  .parent-hero-card,
+  .parent-child-summary,
+  .parent-fee-highlight,
+  .parent-section-header,
+  .parent-homework-card,
+  .parent-update-card,
+  .parent-transport-card,
+  .parent-activity-main {
+    align-items: stretch;
+    flex-direction: column;
+    display: flex;
+  }
+
+  .parent-topbar-actions,
+  .parent-report-actions,
+  .parent-payment-panel {
+    width: 100%;
+  }
+
+  .parent-notification-pill,
+  .parent-profile-pill,
+  .parent-logout-btn,
+  .parent-primary-link,
+  .parent-primary-action,
+  .parent-secondary-action,
+  .parent-report-actions select {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .parent-child-badges {
+    justify-content: flex-start;
+  }
+
+  .parent-invoice-list-head {
+    flex-direction: column;
+  }
+
+  .parent-summary-grid,
+  .parent-summary-grid.compact,
+  .parent-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .parent-module-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .parent-module-action {
+    grid-column: 1 / -1;
+  }
+
+  .parent-dashboard-section {
+    padding: 18px;
+  }
+
+  .parent-fee-metrics {
+    min-width: 0;
+  }
+
+  .parent-comment-form {
+    grid-template-columns: 1fr;
+  }
+
+  .parent-activity-main img {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+  }
+}

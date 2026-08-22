@@ -1,0 +1,37 @@
+{
+  "name": "angel-montessori-public-web",
+  "version": "1.0.0",
+  "description": "Public website for Angel Montessori School",
+  "private": true,
+  "proxy": "http://127.0.0.1:6060",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
+    "react-scripts": "^5.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "author": "Angel Montessori School",
+  "license": "MIT",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

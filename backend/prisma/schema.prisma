@@ -1,0 +1,357 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  VIEWER
+}
+
+enum TermStatus {
+  DRAFT
+  LOCKED
+}
+
+enum FinanceApprovalStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum AssessmentApprovalStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum ResultPublicationState {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(TEACHER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  audits AuditLog[]
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  name      String
+  section   String
+  order     Int      @default(999)
+  createdAt DateTime @default(now())
+
+  students      Student[]
+  termLocks     TermLock[]
+  feeStructures FinanceFeeStructure[]
+}
+
+model Student {
+  id        String   @id @default(cuid())
+  name      String
+  classId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  class          Class                  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  results        Result[]
+  reports        ReportMeta[]
+  financeProfile FinanceStudentProfile?
+}
+
+model TermLock {
+  id        String     @id @default(cuid())
+  classId   String
+  session   String
+  term      String
+  status    TermStatus @default(DRAFT)
+  lockedBy  String?
+  lockedAt  DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, session, term])
+}
+
+model Result {
+  id        String   @id @default(cuid())
+  studentId String
+  session   String
+  term      String
+  subject   String
+  score     Int
+  date      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, session, term, subject])
+  @@index([session, term])
+}
+
+model ReportMeta {
+  id                 String   @id @default(cuid())
+  studentId          String
+  session            String
+  term               String
+  nextTermBegins     String?
+  teacherComment     String?
+  headTeacherComment String?
+  present            Int      @default(0)
+  absent             Int      @default(0)
+  total              Int      @default(0)
+  updatedAt          DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, session, term])
+  @@index([session, term])
+}
+
+model ContinuousAssessment {
+  id                 String                   @id @default(cuid())
+  academicSession    String
+  sessionId          String?
+  term               String
+  termId             String?
+  classId            String
+  className          String
+  arm                String?
+  section            String?
+  subject            String
+  studentId          String
+  studentName        String
+  ca1                Float?
+  ca2                Float?
+  ca3                Float?
+  examScore          Float?
+  totalScore         Float                   @default(0)
+  totalMax           Float                   @default(100)
+  grade              String?
+  teacherRemark      String?
+  positionInSubject  Int?
+  classAverage       Float?
+  firstTermAverage   Float?
+  secondTermAverage  Float?
+  annualCumulativeAverage Float?
+  approvalStatus     AssessmentApprovalStatus @default(DRAFT)
+  isLocked           Boolean                  @default(false)
+  isPublished        Boolean                  @default(false)
+  ca1Source          String                   @default("MANUAL")
+  ca2Source          String                   @default("MANUAL")
+  ca3Source          String                   @default("MANUAL")
+  ca2SourceRecordId  String?
+  ca3SourceRecordId  String?
+  settingsSnapshot   Json?
+  correctionNote     String?
+  createdBy          String?
+  createdByName      String?
+  updatedBy          String?
+  updatedByName      String?
+  submittedBy        String?
+  submittedAt        DateTime?
+  approvedBy         String?
+  approvedByName     String?
+  approvedAt         DateTime?
+  rejectedBy         String?
+  rejectedAt         DateTime?
+  unlockedBy         String?
+  unlockedAt         DateTime?
+  publishedBy        String?
+  publishedAt        DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  @@unique([studentId, subject, classId, academicSession, term])
+  @@index([classId, academicSession, term, subject])
+  @@index([approvalStatus, isPublished])
+  @@map("continuous_assessments")
+}
+
+model AssessmentSetting {
+  id                 String   @id @default(cuid())
+  classId            String?
+  className          String?
+  classLevel         String?
+  ca1Max             Float    @default(10)
+  ca2Max             Float    @default(10)
+  ca3Max             Float    @default(10)
+  examMax            Float    @default(70)
+  totalMax           Float    @default(100)
+  carryForwardMode   String   @default("SCALED_TERM_TOTAL")
+  isDefault          Boolean  @default(false)
+  createdBy          String?
+  updatedBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([classId, classLevel])
+  @@map("assessment_settings")
+}
+
+model GradingScale {
+  id          String   @id @default(cuid())
+  grade       String
+  minScore    Float
+  maxScore    Float
+  remark      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, minScore, maxScore])
+  @@map("grading_scales")
+}
+
+model ResultApproval {
+  id             String   @id @default(cuid())
+  resultType     String
+  referenceId    String
+  approvalStatus String
+  notes          String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([resultType, referenceId])
+  @@index([approvalStatus])
+  @@map("result_approvals")
+}
+
+model ResultPublicationStatus {
+  id              String                 @id @default(cuid())
+  classId          String
+  className        String?
+  sessionId        String?
+  sessionName      String
+  termId           String?
+  termName         String
+  status           ResultPublicationState @default(DRAFT)
+  isPublished      Boolean                @default(false)
+  publishedBy      String?
+  publishedByName  String?
+  publishedAt      DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@unique([classId, sessionName, termName])
+  @@index([status, isPublished])
+  @@map("result_publication_status")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model FinanceStudentProfile {
+  id             String   @id @default(cuid())
+  studentId      String   @unique
+  studentType    String   @default("REGULAR")
+  canStudentView Boolean  @default(true)
+  canParentView  Boolean  @default(true)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model FinanceFeeStructure {
+  id              String                @id @default(cuid())
+  classId         String
+  session         String
+  term            String
+  studentType     String                @default("REGULAR")
+  title           String?
+  description     String?
+  status          FinanceApprovalStatus @default(DRAFT)
+  submittedAt     DateTime?
+  submittedById   String?
+  submittedByName String?
+  approvedAt      DateTime?
+  approvedById    String?
+  approvedByName  String?
+  rejectedAt      DateTime?
+  rejectedById    String?
+  rejectedByName  String?
+  rejectionReason String?
+  createdById     String?
+  createdByName   String?
+  updatedById     String?
+  updatedByName   String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  class      Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
+  components FinanceFeeComponent[]
+  approvals  FinanceFeeApproval[]
+
+  @@index([classId, session, term, studentType, status])
+  @@index([session, term, status])
+}
+
+model FinanceFeeComponent {
+  id               String   @id @default(cuid())
+  feeStructureId   String
+  code             String
+  name             String
+  description      String?
+  amount           Int
+  isOptional       Boolean  @default(false)
+  visibleToStudent Boolean  @default(true)
+  visibleToParent  Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  feeStructure FinanceFeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+
+  @@unique([feeStructureId, code])
+  @@index([feeStructureId, sortOrder])
+}
+
+model FinanceFeeApproval {
+  id             String                @id @default(cuid())
+  feeStructureId String
+  action         String
+  status         FinanceApprovalStatus
+  notes          String?
+  actorId        String?
+  actorName      String?
+  actorRole      String?
+  createdAt      DateTime              @default(now())
+
+  feeStructure FinanceFeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+
+  @@index([feeStructureId, createdAt])
+}

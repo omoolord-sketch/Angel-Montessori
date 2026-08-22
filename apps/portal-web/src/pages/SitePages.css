@@ -1,0 +1,114 @@
+.site-page {
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: #10233f;
+  background: linear-gradient(180deg, #f7fbff 0%, #edf5fb 100%);
+  min-height: 100vh;
+}
+
+.site-wrap {
+  width: min(1120px, 92vw);
+  margin: 0 auto;
+  padding: 22px 0 34px;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #d9e4f0;
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+
+.site-header a {
+  text-decoration: none;
+  color: #15385f;
+  font-weight: 700;
+}
+
+.site-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.site-hero,
+.site-card {
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #d9e4f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 14px 30px rgba(16, 35, 63, 0.08);
+}
+
+.site-hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.7rem, 2.8vw, 2.5rem);
+}
+
+.site-hero p,
+.site-card p,
+.site-card li,
+.site-card label {
+  color: #36506f;
+  line-height: 1.6;
+}
+
+.site-grid-3 {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.site-grid-2 {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.site-card h3,
+.site-card h4 {
+  margin-top: 0;
+}
+
+.site-form {
+  display: grid;
+  gap: 10px;
+}
+
+.site-form input,
+.site-form select,
+.site-form textarea {
+  border: 1px solid #c9d9ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.site-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #0b6e4f;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-muted {
+  font-size: 0.9rem;
+  color: #5f7893;
+}
+
+@media (max-width: 900px) {
+  .site-grid-3,
+  .site-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

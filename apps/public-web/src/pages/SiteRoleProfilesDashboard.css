@@ -1,0 +1,234 @@
+.site-role-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.site-role-tab {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid #d2dfef;
+  background: rgba(255, 255, 255, 0.92);
+  color: #173a70;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-role-tab.active {
+  background: linear-gradient(135deg, #2b80c3 0%, #1d4d8f 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 16px 28px rgba(23, 58, 112, 0.16);
+}
+
+.site-role-feedback {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+}
+
+.site-role-feedback.error {
+  background: #fff4f4;
+  border-color: #f5c6cb;
+  color: #8d2430;
+}
+
+.site-role-feedback.success {
+  background: #f3fbf5;
+  border-color: #cde9d3;
+  color: #216443;
+}
+
+.site-role-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1.3fr;
+  gap: 18px;
+}
+
+.site-role-panel {
+  padding: 22px;
+  border: 1px solid rgba(197, 215, 235, 0.9);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 34px rgba(21, 55, 101, 0.08);
+}
+
+.site-role-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.site-role-panel-header h2 {
+  margin: 6px 0 0;
+  color: #173a70;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+.site-role-panel-copy {
+  margin: 0 0 16px;
+  color: #4f647d;
+  line-height: 1.7;
+}
+
+.site-role-fixed-grid,
+.site-role-card-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.site-role-fixed-card,
+.site-role-card {
+  display: grid;
+  grid-template-columns: 108px 1fr auto;
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid #d6e2f0;
+  border-radius: 20px;
+  background: #fbfdff;
+}
+
+.site-role-fixed-card {
+  grid-template-columns: 96px 1fr;
+}
+
+.site-role-fixed-card img,
+.site-role-card-media img,
+.site-role-image-preview img {
+  width: 100%;
+  height: 132px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid #d6e2f0;
+  background: #eff5fb;
+}
+
+.site-role-fixed-card strong,
+.site-role-card-meta strong {
+  display: block;
+  color: #173a70;
+  font-size: 1.04rem;
+}
+
+.site-role-fixed-card span,
+.site-role-card-meta span {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #b88719;
+  font-size: 0.83rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.site-role-fixed-card p,
+.site-role-card-copy p {
+  margin: 0;
+  color: #4f647d;
+  line-height: 1.65;
+}
+
+.site-role-card-copy small {
+  display: inline-block;
+  margin-top: 8px;
+  color: #667a94;
+}
+
+.site-role-card-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.site-role-danger-btn {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid #efc2c7;
+  background: #fff5f6;
+  color: #b33141;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-role-form {
+  display: grid;
+  gap: 14px;
+}
+
+.site-role-form label {
+  display: grid;
+  gap: 8px;
+  color: #173a70;
+  font-weight: 700;
+}
+
+.site-role-form input,
+.site-role-form textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #d2dfef;
+  background: #ffffff;
+  color: #173a70;
+  font: inherit;
+}
+
+.site-role-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.site-role-form-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 14px;
+}
+
+.site-role-image-preview {
+  max-width: 180px;
+}
+
+.site-role-form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 980px) {
+  .site-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-role-fixed-card,
+  .site-role-card {
+    grid-template-columns: 1fr;
+  }
+
+  .site-role-card-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .site-role-panel {
+    padding: 18px;
+  }
+
+  .site-role-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .site-role-form-actions,
+  .site-role-card-actions {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+}

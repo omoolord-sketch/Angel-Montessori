@@ -1,0 +1,12 @@
+{
+  "name": "angel-montessori-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Angel Montessori School backend, public website, and portal monorepo.",
+  "scripts": {
+    "build:public": "npm --prefix apps/public-web run build",
+    "build:portal": "npm --prefix apps/portal-web run build",
+    "build:web": "npm run build:public && npm run build:portal",
+    "start:backend": "npm --prefix backend start"
+  }
+}
