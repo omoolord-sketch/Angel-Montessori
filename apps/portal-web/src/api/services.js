@@ -89,6 +89,9 @@ export const getEarlyYearsCurriculumVersion = (versionId) => API.get(`/early-yea
 export const getEarlyYearsCurriculumImportStatus = () => API.get("/early-years/curriculum/admin/import-status");
 export const importEarlyYearsCurriculumFile = (data) => API.post("/early-years/curriculum/admin/import", data || {});
 export const validateEarlyYearsCurriculumImport = (data) => API.post("/early-years/curriculum/admin/validate", data || {});
+export const getAmesVolumeIIIImportStatus = () => API.get("/early-years/curriculum/admin/volume-iii-import/status");
+export const dryRunAmesVolumeIIIImport = () => API.get("/early-years/curriculum/admin/volume-iii-import/dry-run");
+export const executeAmesVolumeIIIImport = (data) => API.post("/early-years/curriculum/admin/volume-iii-import/execute", data || {});
 export const createEarlyYearsCurriculumPlanShell = (weekId, data) => API.post(`/early-years/curriculum/weeks/${weekId}/plans`, data || {});
 
 /* EARLY YEARS PLANNING */

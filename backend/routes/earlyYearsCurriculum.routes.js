@@ -3,6 +3,12 @@ const path = require("path");
 const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const {
+  CONFIRMATION_TEXT,
+  dryRunVolumeIIIImport,
+  executeVolumeIIIImport,
+  getVolumeIIIImportStatus,
+} = require("../lib/amesVolumeIIIAdminImport");
+const {
   CURRICULUM_MANAGE_ROLES,
   CURRICULUM_VIEW_ROLES,
   EYFS_AREA_REFS,
@@ -32,6 +38,13 @@ router.use(auth());
 
 function handleError(res, error) {
   return res.status(error?.status || 500).json({ message: error?.message || "Early Years curriculum request failed" });
+}
+
+function handleImportError(res, error) {
+  return res.status(error?.status || 500).json({
+    message: error?.message || "AMES Volume III import request failed",
+    details: error?.details || null,
+  });
 }
 
 function readCurriculumDb() {
@@ -172,6 +185,34 @@ router.get("/admin/import-status", requireRole(...CURRICULUM_MANAGE_ROLES), (req
     importBatches: db.curriculumImportBatches || [],
     auditLogs: (db.curriculumAuditLogs || []).slice(0, 100),
   });
+});
+
+router.get("/admin/volume-iii-import/status", requireRole("ADMIN", "SUPER_ADMIN"), (req, res) => {
+  try {
+    return res.json({ status: getVolumeIIIImportStatus(), confirmationText: CONFIRMATION_TEXT });
+  } catch (error) {
+    return handleImportError(res, error);
+  }
+});
+
+router.get("/admin/volume-iii-import/dry-run", requireRole("ADMIN", "SUPER_ADMIN"), (req, res) => {
+  try {
+    return res.json({ dryRun: dryRunVolumeIIIImport(req.user), confirmationText: CONFIRMATION_TEXT });
+  } catch (error) {
+    return handleImportError(res, error);
+  }
+});
+
+router.post("/admin/volume-iii-import/execute", requireRole("ADMIN", "SUPER_ADMIN"), (req, res) => {
+  try {
+    const result = executeVolumeIIIImport({
+      actor: req.user,
+      confirmation: req.body?.confirmation || req.body?.confirm,
+    });
+    return res.json({ result });
+  } catch (error) {
+    return handleImportError(res, error);
+  }
 });
 
 router.post("/admin/import", requireRole(...CURRICULUM_MANAGE_ROLES), (req, res) => {

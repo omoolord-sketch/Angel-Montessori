@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import {
   createEarlyYearsWeeklyPlan,
+  dryRunAmesVolumeIIIImport,
+  executeAmesVolumeIIIImport,
+  getAmesVolumeIIIImportStatus,
   getEarlyYearsCurriculum,
   getEarlyYearsCurriculumFrameworks,
   searchEarlyYearsCurriculum,
@@ -21,13 +24,143 @@ function isAdminRole(user) {
   return ["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER"].includes(roleOf(user));
 }
 
+function isVolumeImportAdmin(user) {
+  return ["ADMIN", "SUPER_ADMIN"].includes(roleOf(user));
+}
+
 function textOrDash(value) {
   const text = Array.isArray(value) ? value.filter(Boolean).join(", ") : String(value || "").trim();
   return text || "-";
 }
 
+function yesNo(value) {
+  return value ? "YES" : "NO";
+}
+
 function StatusBadge({ children, tone = "blue" }) {
   return <span className={`eyfs-curriculum-badge ${tone}`}>{children}</span>;
+}
+
+function ImportMetric({ label, value, helper }) {
+  return (
+    <article>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {helper ? <small>{helper}</small> : null}
+    </article>
+  );
+}
+
+function VolumeIIIImportPanel({
+  status,
+  dryRun,
+  verification,
+  busy,
+  confirmationReady,
+  onConfirmationReady,
+  onRefresh,
+  onDryRun,
+  onExecute,
+}) {
+  const active = dryRun || status || {};
+  const currentCounts = active.currentCounts || {};
+  const finalCounts = active.expectedFinalCounts || active.verification?.classCounts || {};
+  const protectedSummary = active.protectedCollections || {};
+  const alreadyImported = Boolean(active.alreadyImported);
+  const dryRunReady = Boolean(dryRun && dryRun.canImport && !dryRun.alreadyImported);
+
+  return (
+    <section className="eyfs-volume-import-panel">
+      <div className="eyfs-volume-import-head">
+        <div>
+          <div className="portal-surface-kicker">Admin Only</div>
+          <h2>AMES Volume III one-time import</h2>
+          <p>
+            Import the locked approved Crèche, Nursery, and Reception curriculum from the backend seed source into the persistent JSON database.
+          </p>
+        </div>
+        <div className="eyfs-volume-import-actions">
+          <button type="button" onClick={onRefresh} disabled={busy}>{busy ? "Checking" : "Refresh Status"}</button>
+          <button type="button" onClick={onDryRun} disabled={busy || alreadyImported}>{busy ? "Running" : "Dry Run"}</button>
+        </div>
+      </div>
+
+      {alreadyImported ? (
+        <div className="eyfs-volume-import-ready">
+          <strong>Curriculum already imported</strong>
+          <span>The approved 117-week AMES Volume III source is already present and verified.</span>
+        </div>
+      ) : null}
+
+      <div className="eyfs-volume-import-grid">
+        <ImportMetric label="Database" value={yesNo(active.databaseDetected)} helper={active.resolvedDatabasePath || "Not checked"} />
+        <ImportMetric label="Existing Total" value={active.existingCurriculumTotal ?? 0} helper="Current approved weeks" />
+        <ImportMetric label="Crèche" value={currentCounts["Crèche"] ?? active.crecheCurrentCount ?? 0} helper="Current weeks" />
+        <ImportMetric label="Nursery" value={currentCounts.Nursery ?? active.nurseryCurrentCount ?? 0} helper="Current weeks" />
+        <ImportMetric label="Reception" value={currentCounts.Reception ?? active.receptionCurrentCount ?? 0} helper="Current weeks" />
+        <ImportMetric label="Source" value={active.source || "approved AMES Volume III"} helper={`Version ${active.version || "1.0"}`} />
+        <ImportMetric label="Duplicates" value={active.duplicateCount ?? 0} helper="Expected 0" />
+        <ImportMetric label="Placeholders" value={active.placeholderCount ?? 0} helper="Expected 0" />
+      </div>
+
+      {dryRun ? (
+        <div className="eyfs-volume-import-results">
+          <div>
+            <span>Proposed additions</span>
+            <strong>{dryRun.proposedAdditions?.weeks ?? 0} weeks</strong>
+            <small>{dryRun.proposedAdditions?.items ?? 0} curriculum items</small>
+          </div>
+          <div>
+            <span>Proposed updates</span>
+            <strong>{dryRun.proposedUpdates?.weeks ?? 0} weeks</strong>
+            <small>{dryRun.proposedUpdates?.items ?? 0} curriculum items</small>
+          </div>
+          <div>
+            <span>Proposed deletions</span>
+            <strong>{dryRun.proposedDeletions?.totalRecords ?? 0}</strong>
+            <small>No deletion is permitted</small>
+          </div>
+          <div>
+            <span>Expected final count</span>
+            <strong>{dryRun.expectedFinalTotal ?? 0}</strong>
+            <small>Crèche {finalCounts["Crèche"] ?? 0}, Nursery {finalCounts.Nursery ?? 0}, Reception {finalCounts.Reception ?? 0}</small>
+          </div>
+          <div>
+            <span>Backup required</span>
+            <strong>{yesNo(dryRun.backupRequired)}</strong>
+            <small>Created before live write</small>
+          </div>
+          <div>
+            <span>Protected data</span>
+            <strong>{protectedSummary.ok === false ? "Blocked" : "Unchanged"}</strong>
+            <small>{protectedSummary.checked || 0} collections checked</small>
+          </div>
+        </div>
+      ) : null}
+
+      {dryRunReady ? (
+        <div className="eyfs-volume-import-confirm">
+          <label>
+            <input type="checkbox" checked={confirmationReady} onChange={(event) => onConfirmationReady(event.target.checked)} />
+            <span>I confirm this will import only the approved AMES Volume III curriculum into the persistent JSON database.</span>
+          </label>
+          <button type="button" onClick={onExecute} disabled={busy || !confirmationReady}>
+            {busy ? "Importing" : "Import Approved Curriculum"}
+          </button>
+        </div>
+      ) : null}
+
+      {verification ? (
+        <div className="eyfs-volume-import-verification">
+          <strong>Verification passed</strong>
+          <span>
+            Total {verification.total}; Crèche {verification.classCounts?.["Crèche"] ?? 0}; Nursery {verification.classCounts?.Nursery ?? 0};
+            Reception {verification.classCounts?.Reception ?? 0}; duplicates {verification.duplicateCount}; placeholders {verification.placeholderCount}.
+          </span>
+        </div>
+      ) : null}
+    </section>
+  );
 }
 
 function WeekDetail({ week, areas, onCreatePlan, planSaving }) {
@@ -110,6 +243,12 @@ export default function EarlyYearsCurriculumDashboard() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [planSaving, setPlanSaving] = useState(false);
+  const [importStatus, setImportStatus] = useState(null);
+  const [importDryRun, setImportDryRun] = useState(null);
+  const [importVerification, setImportVerification] = useState(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importConfirmationReady, setImportConfirmationReady] = useState(false);
+  const [importConfirmationText, setImportConfirmationText] = useState("IMPORT_APPROVED_AMES_VOLUME_III");
 
   const sessions = useMemo(() => setup?.sessions || [], [setup]);
   const terms = useMemo(() => setup?.terms || [], [setup]);
@@ -136,6 +275,7 @@ export default function EarlyYearsCurriculumDashboard() {
       const nextTerm = form.termId || sessionTerms.find((row) => row.isActive)?.id || sessionTerms[0]?.id || data.terms?.[0]?.id || "";
       const nextForm = { classId: nextClass, sessionId: nextSession, termId: nextTerm };
       setForm(nextForm);
+      if (isVolumeImportAdmin(user)) await loadVolumeIIIImportStatus(false);
       if (nextClass) await loadCurriculum(nextForm, false);
     } catch (err) {
       setError(err?.response?.data?.message || "Early Years curriculum setup could not be loaded.");
@@ -165,6 +305,63 @@ export default function EarlyYearsCurriculumDashboard() {
   useEffect(() => {
     loadSetup();
   }, []);
+
+  const loadVolumeIIIImportStatus = async (showBusy = true) => {
+    if (!isVolumeImportAdmin(user)) return;
+    if (showBusy) setImportBusy(true);
+    setError("");
+    try {
+      const data = payloadOf(await getAmesVolumeIIIImportStatus());
+      setImportStatus(data.status || data);
+      setImportConfirmationText(data.confirmationText || "IMPORT_APPROVED_AMES_VOLUME_III");
+    } catch (err) {
+      setError(err?.response?.data?.message || "AMES Volume III import status could not be loaded.");
+    } finally {
+      if (showBusy) setImportBusy(false);
+    }
+  };
+
+  const handleVolumeIIIDryRun = async () => {
+    setImportBusy(true);
+    setError("");
+    setMessage("");
+    setImportVerification(null);
+    setImportConfirmationReady(false);
+    try {
+      const data = payloadOf(await dryRunAmesVolumeIIIImport());
+      const result = data.dryRun || data;
+      setImportDryRun(result);
+      setImportStatus(result);
+      setImportConfirmationText(data.confirmationText || "IMPORT_APPROVED_AMES_VOLUME_III");
+      setMessage(result.alreadyImported ? "Curriculum already imported." : "Dry run completed. Review the result before importing.");
+    } catch (err) {
+      setError(err?.response?.data?.message || "AMES Volume III dry run could not be completed.");
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const handleVolumeIIIExecute = async () => {
+    if (!importDryRun?.canImport || !importConfirmationReady) return;
+    setImportBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = payloadOf(await executeAmesVolumeIIIImport({ confirmation: importConfirmationText }));
+      const result = data.result || data;
+      setImportVerification(result.persistedVerification || result.verification || null);
+      setImportStatus(result);
+      setImportDryRun(null);
+      setImportConfirmationReady(false);
+      setMessage(result.result === "ALREADY_IMPORTED" ? "Curriculum already imported." : "AMES Volume III curriculum import completed and verified.");
+      await loadVolumeIIIImportStatus(false);
+      if (form.classId) await loadCurriculum(form, false);
+    } catch (err) {
+      setError(err?.response?.data?.message || "AMES Volume III import could not be completed.");
+    } finally {
+      setImportBusy(false);
+    }
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -213,6 +410,20 @@ export default function EarlyYearsCurriculumDashboard() {
 
         {error ? <div className="portal-surface-empty academic-alert">{error}</div> : null}
         {message ? <div className="portal-surface-empty eyfs-curriculum-success">{message}</div> : null}
+
+        {isVolumeImportAdmin(user) ? (
+          <VolumeIIIImportPanel
+            status={importStatus}
+            dryRun={importDryRun}
+            verification={importVerification}
+            busy={importBusy}
+            confirmationReady={importConfirmationReady}
+            onConfirmationReady={setImportConfirmationReady}
+            onRefresh={loadVolumeIIIImportStatus}
+            onDryRun={handleVolumeIIIDryRun}
+            onExecute={handleVolumeIIIExecute}
+          />
+        ) : null}
 
         <section className="eyfs-curriculum-toolbar">
           <form className="eyfs-curriculum-form" onSubmit={handleSubmit}>

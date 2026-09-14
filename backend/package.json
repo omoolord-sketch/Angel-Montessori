@@ -5,7 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test:ames-volume-iii-import": "node scripts/testAmesVolumeIIIAdminImport.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
