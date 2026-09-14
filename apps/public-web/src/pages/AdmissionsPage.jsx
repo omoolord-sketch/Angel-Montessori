@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { getAdmissionsPublicConfig, submitAdmissionInquiry } from "../api/services";
 import PublicSiteLayout from "../components/PublicSiteLayout";
+import { ACTIVE_CLASS_NAMES } from "../utils/academicSystems";
 
 const initialForm = {
   childName: "",
@@ -13,24 +14,7 @@ const initialForm = {
   notes: "",
 };
 
-const fallbackClassOptions = [
-  "Creche",
-  "Nursery 1",
-  "Nursery 2",
-  "Reception",
-  "Basic 1",
-  "Basic 2",
-  "Basic 3",
-  "Basic 4",
-  "Basic 5",
-  "Basic 6",
-  "JSS1",
-  "JSS2",
-  "JSS3",
-  "SS1",
-  "SS2",
-  "SS3",
-];
+const fallbackClassOptions = ACTIVE_CLASS_NAMES;
 
 const fallbackSteps = [
   "Create applicant account",

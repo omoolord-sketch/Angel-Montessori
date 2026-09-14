@@ -8,7 +8,7 @@ const router = express.Router();
 const LIBRARY_STRUCTURE = [
   {
     section: "Early Years Library",
-    subcategories: ["Creche", "Nursery 1", "Nursery 2", "Reception"],
+    subcategories: ["Crèche", "Nursery", "Reception"],
   },
   {
     section: "Basic School Library",

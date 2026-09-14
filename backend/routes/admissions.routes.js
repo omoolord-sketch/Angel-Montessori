@@ -13,6 +13,7 @@ const {
   syncAcademicMirrors,
   normalizeSessionName,
 } = require("../lib/academicScope");
+const { ACTIVE_CLASS_CONFIGS, getLegacyClassMapping } = require("../lib/academicSystems");
 
 const router = express.Router();
 const ADMISSIONS_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "ADMISSION_OFFICER"];
@@ -31,6 +32,10 @@ const ADMISSION_STATUSES = [
   "ENROLLED",
 ];
 
+function randomTemporaryPassword() {
+  return `Tmp@${nanoid(10)}`;
+}
+
 const LEGACY_STATUS_MAP = {
   DRAFT: "REGISTERED",
   NEW: "SUBMITTED",
@@ -42,24 +47,18 @@ const LEGACY_STATUS_MAP = {
   DECLINED: "REJECTED",
 };
 
-const BASE_CLASS_OPTIONS = [
-  { id: "creche", className: "Creche", section: "Early Years", capacity: 30, formFee: 5000, status: "OPEN", level: "EARLY_YEARS" },
-  { id: "nursery-1", className: "Nursery 1", section: "Early Years", capacity: 35, formFee: 5000, status: "OPEN", level: "EARLY_YEARS" },
-  { id: "nursery-2", className: "Nursery 2", section: "Early Years", capacity: 35, formFee: 5000, status: "OPEN", level: "EARLY_YEARS" },
-  { id: "reception", className: "Reception", section: "Early Years", capacity: 40, formFee: 5000, status: "OPEN", level: "EARLY_YEARS" },
-  { id: "basic-1", className: "Basic 1", section: "Basic School", capacity: 40, formFee: 10000, status: "OPEN", level: "BASIC" },
-  { id: "basic-2", className: "Basic 2", section: "Basic School", capacity: 40, formFee: 10000, status: "OPEN", level: "BASIC" },
-  { id: "basic-3", className: "Basic 3", section: "Basic School", capacity: 40, formFee: 10000, status: "OPEN", level: "BASIC" },
-  { id: "basic-4", className: "Basic 4", section: "Basic School", capacity: 40, formFee: 10000, status: "OPEN", level: "BASIC" },
-  { id: "basic-5", className: "Basic 5", section: "Basic School", capacity: 40, formFee: 10000, status: "OPEN", level: "BASIC" },
-  { id: "basic-6", className: "Basic 6", section: "Basic School", capacity: 40, formFee: 10000, status: "OPEN", level: "BASIC" },
-  { id: "jss1", className: "JSS1", section: "Junior Secondary", capacity: 45, formFee: 10000, status: "OPEN", level: "SECONDARY" },
-  { id: "jss2", className: "JSS2", section: "Junior Secondary", capacity: 45, formFee: 10000, status: "OPEN", level: "SECONDARY" },
-  { id: "jss3", className: "JSS3", section: "Junior Secondary", capacity: 45, formFee: 10000, status: "OPEN", level: "SECONDARY" },
-  { id: "ss1", className: "SS1", section: "Senior Secondary", capacity: 45, formFee: 15000, status: "OPEN", level: "SECONDARY" },
-  { id: "ss2", className: "SS2", section: "Senior Secondary", capacity: 45, formFee: 15000, status: "OPEN", level: "SECONDARY" },
-  { id: "ss3", className: "SS3", section: "Senior Secondary", capacity: 45, formFee: 15000, status: "OPEN", level: "SECONDARY" },
-];
+const BASE_CLASS_OPTIONS = ACTIVE_CLASS_CONFIGS.map((item) => ({
+  id: item.id,
+  className: item.name,
+  section: item.section,
+  capacity: item.level === "EARLY_YEARS" ? 35 : item.level === "PRIMARY" ? 40 : 45,
+  formFee: item.level === "SENIOR_SECONDARY" ? 15000 : item.level === "EARLY_YEARS" ? 5000 : 10000,
+  status: "OPEN",
+  level: item.level,
+  academicSystem: item.academicSystem,
+  curriculumFramework: item.curriculumFramework,
+  assessmentFramework: item.assessmentFramework,
+}));
 
 const DEFAULT_FAQ = [
   {
@@ -134,7 +133,11 @@ function normalizeClassId(value) {
 }
 
 function normalizeClassKey(value) {
-  return str(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return str(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function splitName(value) {
@@ -231,6 +234,7 @@ function normalizeSession(row) {
 function normalizeAdmissionClass(row) {
   const safe = obj(row);
   const className = str(safe.className || safe.name);
+  const legacy = getLegacyClassMapping(className);
   const now = nowIso();
   return {
     id: str(safe.id) || normalizeClassId(className),
@@ -239,7 +243,10 @@ function normalizeAdmissionClass(row) {
     level: str(safe.level) || "BASIC",
     capacity: num(safe.capacity, 0),
     formFee: num(safe.formFee, 0),
-    status: str(safe.status || "OPEN").toUpperCase() === "CLOSED" ? "CLOSED" : "OPEN",
+    status: legacy || str(safe.status || "OPEN").toUpperCase() === "CLOSED" ? "CLOSED" : "OPEN",
+    legacyStatus: legacy ? "historical_only" : str(safe.legacyStatus),
+    legacyTargetClassId: legacy?.targetClassId || str(safe.legacyTargetClassId),
+    legacyTargetClassName: legacy?.targetClassName || str(safe.legacyTargetClassName),
     requiredDocuments: Array.isArray(safe.requiredDocuments) ? safe.requiredDocuments.map((item) => str(item)).filter(Boolean) : [],
     createdAt: str(safe.createdAt) || now,
     updatedAt: str(safe.updatedAt) || now,
@@ -249,7 +256,7 @@ function normalizeAdmissionClass(row) {
 function getRequiredDocumentsForClassName(className) {
   const key = normalizeClassKey(className);
 
-  if (["creche", "nursery1", "nursery2", "reception"].includes(key)) {
+  if (["creche", "nursery", "nursery1", "nursery2", "reception"].includes(key)) {
     return ["passportPhotoUrl", "birthCertificateUrl"];
   }
 
@@ -1077,7 +1084,7 @@ async function ensurePortalUserFromApplication(db, options) {
   }
 
   const username = generateUniqueUsername(db.users, preferredUsername, fallbackPrefix);
-  const passwordPlain = str(preferredPassword) || (role === "STUDENT" ? "Student@123" : "Parent@123");
+  const passwordPlain = str(preferredPassword) || randomTemporaryPassword();
 
   const created = {
     id: nanoid(),
@@ -1586,6 +1593,10 @@ router.post("/admin/classes", auth(), requireRole(...ADMISSIONS_ADMIN_ROLES), (r
   const body = req.body || {};
   const className = str(body.className || body.name);
   if (!className) return res.status(400).json({ message: "className is required" });
+  const legacy = getLegacyClassMapping(className);
+  if (legacy) {
+    return res.status(400).json({ message: `${className} is preserved for history only. Use ${legacy.targetClassName || "an active class"} for current admissions.` });
+  }
 
   const db = readDB();
   ensureAdmissionCollections(db);

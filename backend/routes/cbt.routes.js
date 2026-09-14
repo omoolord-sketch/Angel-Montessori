@@ -4,6 +4,7 @@ const { readDB, writeDB } = require("../lib/jsonStore");
 const { auth, requireRole } = require("../middleware/auth");
 const { createRateLimiter } = require("../middleware/rateLimit");
 const { SUBJECT_OPTIONS, CLASS_SUBJECTS, normalizeSubject } = require("../lib/subjects");
+const { ACTIVE_CLASS_CONFIGS, getLegacyClassMapping } = require("../lib/academicSystems");
 const {
   CBT_OFFICER_ROLES,
   buildCredentialCsv,
@@ -61,24 +62,7 @@ const CBT_RULE_KEYS = [
   "allowResultSlipPrint",
 ];
 
-const CLASS_ORDER = [
-  "Creche",
-  "Nursery 1",
-  "Nursery 2",
-  "Reception",
-  "Basic 1",
-  "Basic 2",
-  "Basic 3",
-  "Basic 4",
-  "Basic 5",
-  "Basic 6",
-  "JSS1",
-  "JSS2",
-  "JSS3",
-  "SSS1",
-  "SSS2",
-  "SSS3",
-];
+const CLASS_ORDER = ACTIVE_CLASS_CONFIGS.map((item) => item.name);
 
 const CBT_LOGIN_LIMITER = createRateLimiter({
   windowMs: 15 * 60 * 1000,
@@ -131,7 +115,11 @@ function formatSchoolDateTime(value) {
 }
 
 function normalizeKey(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function slugify(value) {
@@ -376,7 +364,10 @@ function ensureUniqueCode(exams, requestedCode, currentExamId = "") {
 }
 
 function getSectionForClass(className) {
-  const clean = String(className || "").toUpperCase();
+  const clean = String(className || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
   if (clean.startsWith("CRECHE") || clean.startsWith("NURSERY") || clean.startsWith("RECEPTION")) return "Early Years";
   if (clean.startsWith("BASIC")) return "Basic School";
   if (clean.startsWith("JSS")) return "Junior Secondary";
@@ -1792,6 +1783,31 @@ function ensureCbtCollections(db) {
     changed = true;
   }
 
+  const activeSeeds = seedClassesFromCatalog();
+  const existingActiveKeys = new Set();
+  db.cbtClasses = (db.cbtClasses || []).map((row) => {
+    const legacy = getLegacyClassMapping(row.className || row.name);
+    if (legacy) {
+      changed = true;
+      return {
+        ...row,
+        status: "ARCHIVED",
+        isActive: false,
+        legacyStatus: "historical_only",
+        legacyTargetClassId: legacy.targetClassId,
+        legacyTargetClassName: legacy.targetClassName,
+        updatedAt: nowIso(),
+      };
+    }
+    existingActiveKeys.add(normalizeKey(row.className || row.name));
+    return row;
+  });
+  for (const seed of activeSeeds) {
+    if (existingActiveKeys.has(normalizeKey(seed.className))) continue;
+    db.cbtClasses.push(seed);
+    changed = true;
+  }
+
   if (db.cbtSubjects.length === 0) {
     db.cbtSubjects = seedSubjectsFromCatalog(db.cbtClasses);
     changed = true;
@@ -1981,7 +1997,7 @@ router.get("/metadata", auth(), requireRole("ADMIN", "TEACHER", "ACADEMIC_OFFICE
   res.json({
     subjects: allSubjects,
     recruitmentAssessmentAreas,
-    classes: [...db.cbtClasses].sort((a, b) => Number(a.levelOrder || 999) - Number(b.levelOrder || 999)),
+    classes: [...db.cbtClasses].filter((item) => item.status !== "ARCHIVED" && item.isActive !== false).sort((a, b) => Number(a.levelOrder || 999) - Number(b.levelOrder || 999)),
     classSubjects: CLASS_SUBJECTS,
     admissionDefaultSubjects: ADMISSION_DEFAULT_SUBJECTS,
     examModes: ["ACADEMIC", "ADMISSION", "INTERVIEW"],
@@ -2026,7 +2042,7 @@ const sendOverview = (req, res) => {
 
   return res.json({
     totals: {
-      classes: (db.cbtClasses || []).length,
+      classes: (db.cbtClasses || []).filter((item) => item.status !== "ARCHIVED" && item.isActive !== false).length,
       subjects: (db.cbtSubjects || []).length,
       questions: questions.length,
       pendingQuestions: questions.filter((item) => item.status === "PENDING").length,
@@ -2055,7 +2071,7 @@ router.get("/overview", auth(), requireRole("ADMIN", "TEACHER", "ACADEMIC_OFFICE
 router.get("/classes", auth(), requireRole("ADMIN", "TEACHER", "ACADEMIC_OFFICER", "SUPER_ADMIN"), (req, res) => {
   const db = ensureCbtCollections(readDB());
   res.json(
-    [...db.cbtClasses].sort((a, b) => Number(a.levelOrder || 999) - Number(b.levelOrder || 999))
+    [...db.cbtClasses].filter((item) => item.status !== "ARCHIVED" && item.isActive !== false).sort((a, b) => Number(a.levelOrder || 999) - Number(b.levelOrder || 999))
   );
 });
 
@@ -2063,6 +2079,10 @@ router.post("/classes", auth(), requireRole("ADMIN"), (req, res) => {
   const db = ensureCbtCollections(readDB());
   const className = String(req.body?.className || req.body?.name || "").trim();
   if (!className) return res.status(400).json({ message: "className is required" });
+  const legacy = getLegacyClassMapping(className);
+  if (legacy) {
+    return res.status(400).json({ message: `${className} is preserved for history only. Use ${legacy.targetClassName || "an active class"} for current CBT records.` });
+  }
 
   const exists = (db.cbtClasses || []).find((item) => normalizeKey(item.className) === normalizeKey(className));
   if (exists) return res.status(409).json({ message: "Class already exists" });

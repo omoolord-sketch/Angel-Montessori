@@ -6,7 +6,10 @@ node_modules/
 .env.local
 .env.*.local
 backend/.env
+backend/.env.production
 backend/db.json
+backend/uploads/
+uploads/
 
 # Local logs and temporary files
 *.log
@@ -16,6 +19,8 @@ tmp/
 
 # Generated build folders in source apps
 apps/*/build/
+build/
+dist/
 
 # Generated deployment archives
 dist-packages/

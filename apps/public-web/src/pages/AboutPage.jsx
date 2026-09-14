@@ -23,7 +23,7 @@ const coreValues = [
 const trustSignals = [
   "Founded on a coaching vision in 2015",
   "Formal school opened in 2016",
-  "Creche to Senior Secondary pathway",
+  "Crèche to Senior Secondary pathway",
   "Montessori and NERDC learning blend",
   "Strong parent partnership and child-centred care",
   "Building Lives, Inspiring Futures",
@@ -58,7 +58,7 @@ export default function AboutPage() {
               a full school and has continued to shape the institution ever since.
             </p>
             <p>
-              Today, Angel Montessori School provides a full pathway from Creche and Reception through Basic School,
+              Today, Angel Montessori School provides a full pathway from Crèche, Nursery and Reception through Basic School,
               Junior Secondary, and Senior Secondary. Our approach blends Montessori principles, the Nigerian curriculum,
               and technology-supported learning to develop the whole child intellectually, morally, socially, and
               emotionally.

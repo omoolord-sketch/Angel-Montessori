@@ -4,6 +4,11 @@ const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { DEFAULT_CLASSES } = require("../lib/defaultClasses");
 const { ensureAcademicScope } = require("../lib/academicScope");
+const {
+  ensureAcademicSystemShape,
+  isEarlyYearsClass,
+  sortAcademicClasses,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -13,7 +18,7 @@ const DECISION_STATUSES = ["promoted", "promoted_conditionally", "probation", "r
 
 const str = (v) => String(v || "").trim();
 const nowIso = () => new Date().toISOString();
-const norm = (v) => str(v).toLowerCase().replace(/[^a-z0-9]/g, "");
+const norm = (v) => str(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const num = (v, fb = 0) => (Number.isFinite(Number(v)) ? Number(v) : fb);
 const classIdFromName = (name) => str(name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -27,12 +32,7 @@ function sectionFromClass(name) {
 }
 
 function sortClasses(rows) {
-  return [...(Array.isArray(rows) ? rows : [])].sort((a, b) => {
-    const ao = Number(a.order ?? 999);
-    const bo = Number(b.order ?? 999);
-    if (ao !== bo) return ao - bo;
-    return str(a.name).localeCompare(str(b.name));
-  });
+  return sortAcademicClasses(Array.isArray(rows) ? rows : []);
 }
 
 function getClassByInput(db, input) {
@@ -116,6 +116,10 @@ function ensureAcademicMeta(db) {
     mutated = true;
   });
 
+  const classShapeBefore = JSON.stringify(db.classes || []);
+  ensureAcademicSystemShape(db);
+  if (classShapeBefore !== JSON.stringify(db.classes || [])) mutated = true;
+
   return mutated;
 }
 
@@ -123,7 +127,7 @@ function ensureProgressionMap(db) {
   let mutated = false;
   if (!Array.isArray(db.classProgressionMap)) { db.classProgressionMap = []; mutated = true; }
   const byFrom = new Set((db.classProgressionMap || []).map((x) => str(x.fromClassId)));
-  const classes = sortClasses(db.classes || []);
+  const classes = sortClasses((db.classes || []).filter((item) => item.isActive !== false));
   for (let i = 0; i < classes.length; i += 1) {
     const cls = classes[i];
     if (byFrom.has(str(cls.id))) continue;
@@ -156,14 +160,14 @@ function ensureCollections(db) {
   });
   if ((db.promotionPolicies || []).length === 0) {
     const defs = [
-      ["Early Years Promotion Policy", "Early Years", 45, 0, false, false, true, 40],
-      ["Basic School Promotion Policy", "Basic School", 50, 5, true, true, true, 45],
-      ["JSS Promotion Policy", "Junior Secondary", 50, 5, true, true, true, 45],
-      ["SS Promotion Policy", "Senior Secondary", 50, 5, true, true, true, 45],
+      ["Early Years Promotion Policy", "Early Years", 0, 0, false, false, false, 0, true],
+      ["Basic School Promotion Policy", "Primary", 50, 5, true, true, true, 45, false],
+      ["JSS Promotion Policy", "Junior Secondary", 50, 5, true, true, true, 45, false],
+      ["SS Promotion Policy", "Senior Secondary", 50, 5, true, true, true, 45, false],
     ];
-    defs.forEach(([policyName, section, minAverage, minSubjectPassCount, requireEnglishPass, requireMathPass, allowProbation, probationMinAverage]) => {
+    defs.forEach(([policyName, section, minAverage, minSubjectPassCount, requireEnglishPass, requireMathPass, allowProbation, probationMinAverage, requiresDevelopmentalReview]) => {
       const id = `ppol-${nanoid(10)}`;
-      db.promotionPolicies.push({ id, policyName, section, classId: "", sessionId: "", minAverage, minSubjectPassCount, requireEnglishPass, requireMathPass, allowProbation, probationMinAverage, attendanceRequired: false, minAttendancePercentage: 0, autoPromote: true, isTerminalClass: false, isActive: true, createdAt: nowIso(), updatedAt: nowIso() });
+      db.promotionPolicies.push({ id, policyName, section, classId: "", sessionId: "", minAverage, minSubjectPassCount, requireEnglishPass, requireMathPass, allowProbation, probationMinAverage, attendanceRequired: false, minAttendancePercentage: 0, autoPromote: !requiresDevelopmentalReview, requiresDevelopmentalReview: Boolean(requiresDevelopmentalReview), isTerminalClass: false, isActive: true, createdAt: nowIso(), updatedAt: nowIso() });
       if (section !== "Early Years") {
         db.promotionPolicySubjectRules.push({ id: `psr-${nanoid(10)}`, promotionPolicyId: id, subjectId: "english-language", subjectName: "English Language", isCompulsoryPass: true, minimumScore: 50, createdAt: nowIso(), updatedAt: nowIso() });
         db.promotionPolicySubjectRules.push({ id: `psr-${nanoid(10)}`, promotionPolicyId: id, subjectId: "mathematics", subjectName: "Mathematics", isCompulsoryPass: true, minimumScore: 50, createdAt: nowIso(), updatedAt: nowIso() });
@@ -171,6 +175,19 @@ function ensureCollections(db) {
     });
     mutated = true;
   }
+  (db.promotionPolicies || []).forEach((policy) => {
+    if (norm(policy.section) !== "earlyyears" && !norm(policy.policyName).includes("earlyyears")) return;
+    policy.minAverage = 0;
+    policy.minSubjectPassCount = 0;
+    policy.requireEnglishPass = false;
+    policy.requireMathPass = false;
+    policy.allowProbation = false;
+    policy.probationMinAverage = 0;
+    policy.autoPromote = false;
+    policy.requiresDevelopmentalReview = true;
+    policy.updatedAt = nowIso();
+    mutated = true;
+  });
   if (ensureProgressionMap(db)) mutated = true;
   return mutated;
 }
@@ -339,6 +356,14 @@ function evaluateDecision(summary, policy, progression, rules) {
   const reasons = [];
   const terminal = Boolean(policy?.isTerminalClass) || norm(progression?.progressionType) === "terminal";
   if (terminal) return { decisionStatus: "graduated", decisionReason: "Terminal class completed", nextClassId: "", nextClassName: "" };
+  if (policy?.requiresDevelopmentalReview || isEarlyYearsClass({ name: summary?.className, section: policy?.section })) {
+    return {
+      decisionStatus: "pending_review",
+      decisionReason: "Early Years transition requires developmental review and admin approval.",
+      nextClassId: str(progression?.toClassId),
+      nextClassName: str(progression?.toClassName),
+    };
+  }
   if (!summary || Number(summary.totalSubjects || 0) <= 0) return { decisionStatus: "pending_review", decisionReason: "Annual summary incomplete", nextClassId: "", nextClassName: "" };
 
   const minAverage = num(policy?.minAverage, 50);
@@ -486,7 +511,7 @@ router.get("/metadata", auth(), requireRole("ADMIN", "TEACHER"), (req, res) => {
   const mutated = ensureCollections(db);
   const policies = (db.promotionPolicies || []).map((p) => ({ ...p, subjectRules: policyRules(db, p.id) }));
   writeIfNeeded(db, mutated);
-  res.json({ statuses: DECISION_STATUSES, classes: sortClasses(db.classes || []), sessions: db.academicSessions || [], terms: db.terms || [], policies, progressionMap: db.classProgressionMap || [] });
+  res.json({ statuses: DECISION_STATUSES, classes: sortClasses((db.classes || []).filter((item) => item.isActive !== false)), sessions: db.academicSessions || [], terms: db.terms || [], policies, progressionMap: db.classProgressionMap || [] });
 });
 
 router.get("/dashboard", auth(), requireRole("ADMIN", "TEACHER"), (req, res) => {

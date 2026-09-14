@@ -48,14 +48,14 @@ export default function AccountProvisioningDashboard() {
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
 
   const [studentPrefix, setStudentPrefix] = useState("student");
-  const [studentPassword, setStudentPassword] = useState("Student@123");
+  const [studentPassword, setStudentPassword] = useState("");
   const [parentPrefix, setParentPrefix] = useState("parent");
-  const [parentPassword, setParentPassword] = useState("Parent@123");
+  const [parentPassword, setParentPassword] = useState("");
   const [mergeSiblings, setMergeSiblings] = useState(true);
   const [forceChange, setForceChange] = useState(true);
 
   const [teacherPrefix, setTeacherPrefix] = useState("teacher");
-  const [teacherPassword, setTeacherPassword] = useState("Teacher@123");
+  const [teacherPassword, setTeacherPassword] = useState("");
   const [teacherRole, setTeacherRole] = useState("TEACHER");
   const [teacherSeed, setTeacherSeed] = useState("");
 

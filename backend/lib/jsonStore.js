@@ -5,6 +5,10 @@ const { hashPasswordSync, isPasswordHash } = require("./passwords");
 
 const DEFAULT_DB_PATH = path.join(__dirname, "..", "db.json");
 
+function envValue(name) {
+  return String(process.env[name] || "").trim();
+}
+
 function resolveDbPath() {
   const configuredPath = String(process.env.JSON_DB_PATH || process.env.AMS_JSON_DB_PATH || "").trim();
   if (!configuredPath) return DEFAULT_DB_PATH;
@@ -22,43 +26,33 @@ function ensureDbFileExists(dbPath) {
   }
 }
 
+function buildInitialUsers() {
+  const bootstrapUsername = envValue("BOOTSTRAP_ADMIN_USERNAME");
+  const bootstrapPassword = envValue("BOOTSTRAP_ADMIN_PASSWORD");
+  if (!bootstrapUsername || !bootstrapPassword) return [];
+
+  return [
+    {
+      id: envValue("BOOTSTRAP_ADMIN_ID") || "u-bootstrap-admin",
+      name: envValue("BOOTSTRAP_ADMIN_NAME") || "Bootstrap Admin",
+      username: bootstrapUsername,
+      password: hashPasswordSync(bootstrapPassword),
+      role: "ADMIN",
+      status: "active",
+      mustChangePassword: true,
+      phone: "",
+      subjects: [],
+      studentId: "",
+      studentIds: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+  ];
+}
+
 function defaultDB() {
   return {
-    users: [
-      {
-        id: "u-admin",
-        name: "Admin User",
-        username: "admin",
-        password: hashPasswordSync("Admin@123"),
-        role: "ADMIN",
-        phone: "",
-        subjects: [],
-        studentId: "",
-        studentIds: []
-      },
-      {
-        id: "u-teacher-math",
-        name: "Math Teacher",
-        username: "teacher.math",
-        password: hashPasswordSync("Teacher@123"),
-        role: "TEACHER",
-        phone: "",
-        subjects: ["Mathematics"],
-        studentId: "",
-        studentIds: []
-      },
-      {
-        id: "u-teacher-english",
-        name: "English Teacher",
-        username: "teacher.english",
-        password: hashPasswordSync("Teacher@123"),
-        role: "TEACHER",
-        phone: "",
-        subjects: ["English Language"],
-        studentId: "",
-        studentIds: []
-      }
-    ],
+    users: buildInitialUsers(),
     students: [],
     results: [],
     classes: [],
@@ -246,6 +240,80 @@ function defaultDB() {
     schemeOfWorkProgressLogs: [],
     lessonNotes: [],
     lessonNoteReviews: [],
+    curriculumFrameworks: [],
+    curriculumFrameworkVersions: [],
+    curriculumTerms: [],
+    curriculumWeeks: [],
+    curriculumItems: [],
+    curriculumTeacherPlans: [],
+    curriculumDailyTeachingRecords: [],
+    curriculumWeeklyPlanReviews: [],
+    curriculumPlanAmendments: [],
+    curriculumImportBatches: [],
+    curriculumAuditLogs: [],
+    curriculumSessionAssignments: [],
+    curriculumDevelopmentalJourneys: [],
+    earlyYearsObservations: [],
+    earlyYearsLearningJournalEntries: [],
+    earlyYearsChildProfiles: [],
+    earlyYearsDevelopmentSummaries: [],
+    earlyYearsNextSteps: [],
+    earlyYearsParentContributions: [],
+    earlyYearsAssessmentAuditLogs: [],
+    earlyYearsEvidenceRecords: [],
+    eyfsObservations: [],
+    earlyYearsPhonicsProgrammes: [],
+    earlyYearsPhonicsTeachingUnits: [],
+    earlyYearsPhonicsProgress: [],
+    earlyYearsDecodableBooks: [],
+    earlyYearsDecodableReadingRecords: [],
+    earlyYearsReadingRecords: [],
+    earlyYearsWritingRecords: [],
+    earlyYearsLiteracySupportPlans: [],
+    earlyYearsLiteracySummaries: [],
+    earlyYearsHomeReadingRecords: [],
+    earlyYearsLiteracyParentUpdates: [],
+    earlyYearsLiteracyAuditLogs: [],
+    earlyYearsProvisionAreas: [],
+    earlyYearsWeeklyProvisionEnhancements: [],
+    earlyYearsPracticalLifeActivities: [],
+    earlyYearsPracticalLifeAssignments: [],
+    earlyYearsEnvironmentChecklists: [],
+    earlyYearsEnvironmentActions: [],
+    earlyYearsResources: [],
+    earlyYearsResourceRequests: [],
+    earlyYearsEnvironmentReviews: [],
+    earlyYearsDisplayReviews: [],
+    earlyYearsEnvironmentAuditLogs: [],
+    earlyYearsSupportProfiles: [],
+    earlyYearsSupportConcerns: [],
+    earlyYearsSupportPlans: [],
+    earlyYearsSupportPlanReviews: [],
+    earlyYearsSupportStrategies: [],
+    earlyYearsReferralRecords: [],
+    earlyYearsProfessionalRecords: [],
+    earlyYearsParentPartnershipProfiles: [],
+    earlyYearsParentPartnershipMeetings: [],
+    earlyYearsParentSupportSummaries: [],
+    earlyYearsConsentRecords: [],
+    earlyYearsTransitionSupportPlans: [],
+    earlyYearsInclusionAuditLogs: [],
+    earlyYearsReports: [],
+    earlyYearsReportAreas: [],
+    earlyYearsReportEvidenceLinks: [],
+    earlyYearsReportTemplates: [],
+    earlyYearsReportAuditLogs: [],
+    receptionEyfsReferences: [],
+    receptionSchoolReadinessProfiles: [],
+    receptionBasicOneTransitionProfiles: [],
+    earlyYearsReportHandoverAcknowledgements: [],
+    earlyYearsQAActions: [],
+    earlyYearsQAModerationRecords: [],
+    earlyYearsQALeadershipNotes: [],
+    earlyYearsQAEnvironmentWalks: [],
+    earlyYearsQAAuditLogs: [],
+    earlyYearsQAAuditRuns: [],
+    earlyYearsQAMilestones: [],
     lmsVirtualClasses: [],
     lmsVirtualClassJoins: [],
     lmsVirtualNotifications: [],

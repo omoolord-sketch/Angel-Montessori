@@ -5,6 +5,7 @@ const { nanoid } = require("nanoid");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { auth, requireRole } = require("../middleware/auth");
 const { ensureAcademicScope } = require("../lib/academicScope");
+const { ensureAcademicSystemShape, sortAcademicClasses } = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -56,7 +57,11 @@ function str(value) {
 }
 
 function nk(value) {
-  return str(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return str(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function num(value, fallback = 0) {
@@ -128,8 +133,13 @@ function ensureCollections(db) {
     changed = true;
   }
   ensureAcademicScope(db, { currentSession: process.env.CURRENT_SESSION, currentTerm: process.env.CURRENT_TERM });
+  ensureAcademicSystemShape(db);
   changed = true;
   return changed;
+}
+
+function activeClasses(db) {
+  return sortAcademicClasses((db.classes || []).filter((row) => row.isActive !== false));
 }
 
 function role(req) {
@@ -218,7 +228,7 @@ function filterContext(db, source = {}) {
 function classLookups(db) {
   const byId = new Map();
   const byName = new Map();
-  for (const row of db.classes || []) {
+  for (const row of activeClasses(db)) {
     const normalized = {
       id: str(row.id),
       name: str(row.name || row.className),
@@ -668,7 +678,7 @@ router.get("/metadata", (req, res) => {
 
   const sessions = getSessions(db);
   const terms = getTerms(db);
-  const sections = Array.from(new Set((db.classes || []).map((row) => sectionFromClass(row)))).sort((a, b) => str(a).localeCompare(str(b)));
+  const sections = Array.from(new Set(activeClasses(db).map((row) => sectionFromClass(row)))).sort((a, b) => str(a).localeCompare(str(b)));
   const teachers = (db.users || []).filter((row) => str(row.role).toUpperCase() === "TEACHER").map((row) => ({ id: str(row.id), name: str(row.name), username: str(row.username) })).sort((a, b) => str(a.name).localeCompare(str(b.name)));
 
   if (changed) writeDB(db);

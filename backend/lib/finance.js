@@ -12,6 +12,7 @@ const {
 } = require("./paymentStore");
 const { setActiveAcademicScope, findAcademicTerm } = require("./academicScope");
 const { isArchivedStudent } = require("./studentRosterSync");
+const { ensureAcademicSystemShape, sortAcademicClasses } = require("./academicSystems");
 
 const FINANCE_VIEW_ROLES = ["ADMIN", "SUPER_ADMIN", "FINANCE_OFFICER", "TEACHER"];
 const FINANCE_MANAGE_ROLES = ["ADMIN", "SUPER_ADMIN", "FINANCE_OFFICER"];
@@ -166,6 +167,7 @@ function ensureFinanceCollections(db) {
     currentSession: process.env.CURRENT_SESSION,
     currentTerm: process.env.CURRENT_TERM,
   });
+  ensureAcademicSystemShape(db);
 
   for (const key of FINANCE_COLLECTIONS) {
     if (!Array.isArray(db[key])) db[key] = [];
@@ -409,14 +411,16 @@ function getStudents(db) {
 }
 
 function getClasses(db) {
-  return [...(Array.isArray(db.classes) ? db.classes : [])]
+  return sortAcademicClasses([...(Array.isArray(db.classes) ? db.classes : [])].filter((item) => item.isActive !== false))
     .map((item) => ({
       id: str(item.id),
       name: str(item.name),
       section: str(item.section),
       order: safeNumber(item.order, 999),
-    }))
-    .sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name));
+      academicSystem: str(item.academicSystem),
+      curriculumFramework: str(item.curriculumFramework),
+      assessmentFramework: str(item.assessmentFramework),
+    }));
 }
 
 function getStaffUsers(db) {

@@ -231,7 +231,7 @@ function buildWhyItMatters(pageKey, page) {
     academicsHome:
       "Families want confidence that a school can carry a child from early years through senior classes with consistency. This overview shows how Angel Montessori structures teaching, progress, and academic support across the full journey.",
     creche:
-      "Early years decisions matter because families want reassurance that a child's first school experience will feel safe, nurturing, and developmentally appropriate. This page helps show how Angel Montessori supports comfort, routine, expression, and early growth at the Creche stage.",
+      "Early years decisions matter because families want reassurance that a child's first school experience will feel safe, nurturing, and developmentally appropriate. This page helps show how Angel Montessori supports comfort, routine, expression, and early growth at the Crèche stage.",
     reception:
       "Reception matters because it builds the bridge between early childhood care and formal learning. This page helps families see how Angel Montessori develops school readiness, phonics, numeracy, confidence, and routine with joy and structure.",
     basicSchool:
@@ -367,9 +367,8 @@ const ABOUT_PAGE_KEYS = ["headOfSchool", "history", "missionVision", "leadership
 
 const SCHOOL_FEE_CLASS_GROUPS = {
   earlyYears: [
-    { id: "creche", label: "Creche" },
-    { id: "nursery-1", label: "Nursery 1" },
-    { id: "nursery-2", label: "Nursery 2" },
+    { id: "creche", label: "Crèche" },
+    { id: "nursery", label: "Nursery" },
     { id: "reception", label: "Reception" },
   ],
   basicSchool: [
@@ -501,7 +500,7 @@ function LiveContentPanel({ title, items, type }) {
 function AcademicJourneyPanel() {
   const journeyStages = [
     {
-      title: "Creche & Reception",
+      title: "Crèche, Nursery & Reception",
       focus: "A gentle start that builds routine, confidence, communication, and school readiness through nurturing early guidance.",
     },
     {
@@ -530,7 +529,7 @@ function AcademicJourneyPanel() {
     },
   ];
   const pathwayLinks = [
-    { label: "Creche", to: "/academics/creche" },
+    { label: "Crèche", to: "/academics/creche" },
     { label: "Reception", to: "/academics/reception" },
     { label: "Basic School", to: "/academics/basic-school" },
     { label: "Junior Secondary", to: "/academics/junior-secondary" },
@@ -542,9 +541,9 @@ function AcademicJourneyPanel() {
       <div className="public-grid-2 public-academic-overview">
         <article className="public-card public-academic-card">
           <div className="public-kicker">Academic Journey</div>
-          <h3>A clear academic pathway from Creche to Senior Secondary</h3>
+          <h3>A clear academic pathway from Crèche to Senior Secondary</h3>
           <p>
-            Angel Montessori School serves learners from Creche through Senior Secondary with a structured academic
+            Angel Montessori School serves learners from Crèche through Senior Secondary with a structured academic
             journey that combines caring teachers, disciplined classroom practice, modern learning tools, and steady
             academic growth at every stage.
           </p>
@@ -595,10 +594,10 @@ function AcademicStagePanel({ pageKey }) {
   const stages = {
     creche: {
       section: "Early Years",
-      classOptions: [{ id: "creche", label: "Creche" }],
+      classOptions: [{ id: "creche", label: "Crèche" }],
       overviewTitle: "A warm first school experience built around care, routine, and confidence",
       overview:
-        "Our Creche programme supports early language, movement, routine, and emotional security in a warm, supervised environment designed for the youngest learners.",
+        "Our Crèche programme supports early language, movement, routine, and emotional security in a warm, supervised environment designed for the youngest learners.",
       approachTitle: "How learning begins at this stage",
       approach:
         "Children are introduced to school life through safe routines, practical guidance, sensory play, and caring adult support that helps them feel secure enough to explore and grow.",
@@ -620,7 +619,7 @@ function AcademicStagePanel({ pageKey }) {
       ],
       nextTitle: "Where this stage leads",
       nextCopy:
-        "The Creche stage helps children settle into structured learning gently, creating the confidence and readiness needed for Reception.",
+        "The Crèche stage helps children settle into structured learning gently, creating the confidence and readiness needed for Nursery and Reception.",
       links: [
         { label: "Reception", to: "/academics/reception" },
         { label: "Book a Visit", to: "/book-a-visit" },
@@ -753,7 +752,7 @@ function AcademicStagePanel({ pageKey }) {
       ],
       overviewTitle: "Focused preparation for WAEC, NECO, and life after school",
       overview:
-        "SSS 1 to SSS 3 supports students through exam preparation, track specialization, subject mastery, and stronger academic maturity.",
+        "SS1 to SS3 supports students through exam preparation, track specialization, subject mastery, and stronger academic maturity.",
       approachTitle: "How learning becomes more specialized",
       approach:
         "Students begin to focus on subject combinations that align with their strengths and career interests, while receiving structured academic guidance, exam preparation, and future-planning support.",
@@ -869,7 +868,7 @@ function CurriculumPanel() {
   const stageSections = [
     {
       index: "01",
-      title: "Early Years (Creche, Nursery & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       tagline: "Building the Foundation for Lifelong Learning",
       intro:
         "Our Early Years program focuses on nurturing curiosity, independence, and confidence through a child-centered Montessori environment.",
@@ -931,7 +930,7 @@ function CurriculumPanel() {
     },
     {
       index: "04",
-      title: "Senior Secondary School (SSS 1 - 3)",
+      title: "Senior Secondary School (SS1 - SS3)",
       tagline: "Preparing for Excellence and Future Opportunities",
       intro:
         "At the Senior Secondary level, pupils begin to specialize based on their strengths and career interests, while preparing for external examinations such as WAEC and NECO.",
@@ -1276,7 +1275,7 @@ function AcademicCalendarPanel({ calendar }) {
 function StemProgramsPanel() {
   const stageSections = [
     {
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       intro: "At this stage, pupils are introduced to STEM through playful exploration that sparks curiosity and confidence.",
       items: [
         "exploration and discovery",
@@ -1312,7 +1311,7 @@ function StemProgramsPanel() {
       closing: "The focus here is stronger reasoning, experimentation, and applied understanding.",
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       intro: "Students are prepared for more advanced learning and science-related future pathways through applied thinking and project work.",
       items: [
         "practical science applications",
@@ -1461,7 +1460,7 @@ function CodingRoboticsPanel() {
       ],
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       items: [
         "advanced digital thinking",
         "real-world problem-solving",
@@ -1591,7 +1590,7 @@ function CodingRoboticsPanel() {
 function ArtsCreativityPanel() {
   const learningStages = [
     {
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       items: [
         "coloring and simple crafts",
         "music and movement",
@@ -1621,7 +1620,7 @@ function ArtsCreativityPanel() {
       closing: "They begin to refine their creative talents.",
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       items: [
         "develop personal creative style",
         "participate in exhibitions and performances",
@@ -1780,7 +1779,7 @@ function ArtsCreativityPanel() {
 function EntrepreneurshipPanel() {
   const learningStages = [
     {
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       intro: "At this stage, pupils begin to grow in confidence, initiative, and simple decision-making through playful guided experiences.",
       items: [
         "role play and imaginative enterprise activities",
@@ -1815,7 +1814,7 @@ function EntrepreneurshipPanel() {
       closing: "The focus shifts toward initiative, planning, and confidence in presenting ideas clearly.",
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       intro: "Students are prepared for future pathways through project-based enterprise thinking, leadership, and practical life readiness.",
       items: [
         "project-based enterprise development",
@@ -1948,7 +1947,7 @@ function EntrepreneurshipPanel() {
 function CommunityServicePanel() {
   const serviceStages = [
     {
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       items: [
         "sharing and kindness in everyday routines",
         "simple acts of care within the classroom",
@@ -1978,7 +1977,7 @@ function CommunityServicePanel() {
       closing: "Learners begin to connect service with leadership, responsibility, and school values.",
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       items: [
         "student-led support initiatives",
         "community-minded leadership opportunities",
@@ -2113,7 +2112,7 @@ function CommunityServicePanel() {
 function EducationalTripsPanel() {
   const tripStages = [
     {
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       items: [
         "guided short visits and supervised exploration",
         "simple observation of the world around them",
@@ -2143,7 +2142,7 @@ function EducationalTripsPanel() {
       closing: "Trips at this level support stronger critical thinking, practical understanding, and intellectual curiosity.",
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       items: [
         "career-linked visits and academic exposure",
         "real-world observation connected to subject pathways",
@@ -2275,7 +2274,7 @@ function EducationalTripsPanel() {
 function CompetitionsAwardsPanel() {
   const competitionStages = [
     {
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       items: [
         "gentle class-based participation",
         "confidence-building presentations and recitations",
@@ -2305,7 +2304,7 @@ function CompetitionsAwardsPanel() {
       closing: "At this level, competitions help pupils sharpen confidence, skill, and school spirit.",
     },
     {
-      title: "Senior Secondary (SSS 1 - 3)",
+      title: "Senior Secondary (SS1 - SS3)",
       items: [
         "advanced academic competitions",
         "leadership in school representation",
@@ -4202,7 +4201,7 @@ function AdmissionsFeesPanel() {
   const feeLevels = [
     {
       index: "01",
-      title: "Early Years (Creche & Reception)",
+      title: "Early Years (Crèche, Nursery & Reception)",
       intro: "Our early years fee structure supports the resources, care, and guided learning experiences needed at the youngest stage.",
       items: [
         "Tuition Fee",

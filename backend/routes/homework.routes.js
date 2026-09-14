@@ -6,6 +6,7 @@ const { readDB, writeDB } = require("../lib/jsonStore");
 const { auth, requireRole } = require("../middleware/auth");
 const { normalizeSubject, getSubjectsForClassName } = require("../lib/subjects");
 const { parseDataUrl, storeUploadedFile } = require("../lib/fileStorage");
+const { ensureAcademicSystemShape, sortAcademicClasses } = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -33,7 +34,16 @@ function nowIso() {
 }
 
 function nk(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function activeClasses(db) {
+  ensureAcademicSystemShape(db);
+  return sortAcademicClasses(asArray(db.classes).filter((item) => item.isActive !== false));
 }
 
 function toNumber(value, fallback = 0) {
@@ -748,17 +758,14 @@ function buildDashboard(db, user) {
 
 router.get("/metadata", auth(), (req, res) => {
   const db = readDB();
-  const classes = asArray(db.classes)
+  const classes = activeClasses(db)
     .map((item) => ({
       id: String(item.id || ""),
       name: String(item.name || ""),
       section: String(item.section || ""),
       order: Number(item.order || 999),
     }))
-    .sort((a, b) => {
-      if (a.order !== b.order) return a.order - b.order;
-      return String(a.name).localeCompare(String(b.name));
-    });
+    .sort((a, b) => a.order - b.order || String(a.name).localeCompare(String(b.name)));
 
   const subjectsByClass = classes.reduce((acc, cls) => {
     acc[cls.id] = getSubjectsForClassName(cls.name);
@@ -767,6 +774,7 @@ router.get("/metadata", auth(), (req, res) => {
 
   const teacherSubjects = req.user.role === "TEACHER" ? asArray(req.user.subjects) : [];
 
+  writeDB(db);
   res.json({
     role: req.user.role,
     classes,

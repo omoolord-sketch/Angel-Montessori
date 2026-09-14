@@ -4,7 +4,8 @@ const prisma = require("../prismaClient");
 const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { normalizeSubjectList, SUBJECT_OPTIONS, CLASS_SUBJECTS } = require("../lib/subjects");
-const { ensureDefaultClasses, DEFAULT_CLASSES } = require("../lib/defaultClasses");
+const { ensureDefaultClasses } = require("../lib/defaultClasses");
+const { ensureAcademicSystemShape, getApprovedClassConfig, sortAcademicClasses } = require("../lib/academicSystems");
 const { hashPassword } = require("../lib/passwords");
 const { isTeacherRole } = require("../lib/roles");
 
@@ -86,9 +87,7 @@ function sanitize(user) {
 }
 
 function randomPassword() {
-  const seed = Math.random().toString(36).slice(2, 8);
-  const digits = String(Math.floor(Math.random() * 900 + 100));
-  return `Tmp@${seed}${digits}`;
+  return `Tmp@${nanoid(10)}`;
 }
 
 function ensureOperationsCollections(db) {
@@ -129,14 +128,11 @@ function addProvisioningLog(db, payload) {
 }
 
 function normalizeClassKey(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function classIdFromName(name) {
-  return String(name || "")
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function classNameFromStudent(student) {
@@ -166,31 +162,10 @@ function findClassByIdOrName(classes, classRef) {
 
 function ensureDefaultClassesInJsonStore() {
   const db = readDB();
-  const classes = Array.isArray(db.classes) ? db.classes : [];
-  const existingKeys = new Set(classes.map((item) => normalizeClassKey(item.name)));
-
-  for (const item of DEFAULT_CLASSES) {
-    const key = normalizeClassKey(item.name);
-    if (existingKeys.has(key)) continue;
-
-    classes.push({
-      id: classIdFromName(item.name),
-      name: item.name,
-      section: item.section,
-      order: item.order,
-    });
-    existingKeys.add(key);
-  }
-
-  db.classes = classes;
+  ensureAcademicSystemShape(db);
   writeDB(db);
 
-  return [...classes].sort((a, b) => {
-    const orderA = Number(a.order ?? 999);
-    const orderB = Number(b.order ?? 999);
-    if (orderA !== orderB) return orderA - orderB;
-    return String(a.name || "").localeCompare(String(b.name || ""));
-  });
+  return sortAcademicClasses((db.classes || []).filter((item) => item.isActive !== false));
 }
 function getClassNameMap(db) {
   const out = new Map();
@@ -744,16 +719,29 @@ router.get("/provisioning/classes", auth(), requireRole(...ADMIN_MANAGEMENT_ROLE
     const jsonStudents = Array.isArray(db.students) ? db.students : [];
 
     return res.json(
-      classes.map((cls) => ({
-        id: cls.id,
-        name: cls.name,
-        section: cls.section,
-        order: cls.order,
-        studentCount: Math.max(
-          Number(cls._count?.students || 0),
-          jsonStudents.filter((student) => matchesClass(student, cls)).length
-        ),
-      }))
+      sortAcademicClasses(
+        classes
+          .map((cls) => {
+            const config = getApprovedClassConfig(cls.name) || getApprovedClassConfig(cls.id);
+            if (!config) return null;
+            return {
+              id: cls.id,
+              name: config.name,
+              section: config.section,
+              level: config.level,
+              academicSystem: config.academicSystem,
+              curriculumFramework: config.curriculumFramework,
+              assessmentFramework: config.assessmentFramework,
+              order: Number(cls.order ?? config.displayOrder),
+              displayOrder: config.displayOrder,
+              studentCount: Math.max(
+                Number(cls._count?.students || 0),
+                jsonStudents.filter((student) => matchesClass(student, { ...cls, name: config.name })).length
+              ),
+            };
+          })
+          .filter(Boolean)
+      )
     );
   } catch {
     const classes = ensureDefaultClassesInJsonStore();
@@ -862,8 +850,8 @@ router.post("/provisioning/provision-class", auth(), requireRole(...ADMIN_MANAGE
     studentIds = [],
     createStudents = true,
     createParents = true,
-    studentPassword = "Student@123",
-    parentPassword = "Parent@123",
+    studentPassword = "",
+    parentPassword = "",
     studentUsernamePrefix = "student",
     parentUsernamePrefix = "parent",
     forcePasswordChange = true,
@@ -909,8 +897,8 @@ router.post("/provisioning/provision-class", auth(), requireRole(...ADMIN_MANAGE
   const users = Array.isArray(db.users) ? db.users : [];
   const existingUsernames = getExistingUsernames(db);
 
-  const rawStudentPassword = String(studentPassword || "Student@123");
-  const rawParentPassword = String(parentPassword || "Parent@123");
+  const rawStudentPassword = String(studentPassword || randomPassword());
+  const rawParentPassword = String(parentPassword || randomPassword());
   const hashedStudentPassword = await hashPassword(rawStudentPassword);
   const hashedParentPassword = await hashPassword(rawParentPassword);
 
@@ -1150,7 +1138,7 @@ router.post("/provisioning/provision-class", auth(), requireRole(...ADMIN_MANAGE
 router.post("/provisioning/provision-parents", auth(), requireRole(...ADMIN_MANAGEMENT_ROLES), async (req, res) => {
   const {
     classId = "",
-    parentPassword = "Parent@123",
+    parentPassword = "",
     parentUsernamePrefix = "parent",
     forcePasswordChange = true,
     mergeSiblings = true,
@@ -1168,7 +1156,7 @@ router.post("/provisioning/provision-parents", auth(), requireRole(...ADMIN_MANA
   });
 
   const existingUsernames = getExistingUsernames(db);
-  const plainPassword = String(parentPassword || "Parent@123");
+  const plainPassword = String(parentPassword || randomPassword());
   const hashedPassword = await hashPassword(plainPassword);
 
   const created = [];
@@ -1259,7 +1247,7 @@ router.post("/provisioning/provision-parents", auth(), requireRole(...ADMIN_MANA
 router.post("/provisioning/provision-teachers", auth(), requireRole(...ADMIN_MANAGEMENT_ROLES), async (req, res) => {
   const {
     teachers = [],
-    teacherPassword = "Teacher@123",
+    teacherPassword = "",
     teacherUsernamePrefix = "teacher",
     teacherRole = "TEACHER",
     forcePasswordChange = true,
@@ -1274,7 +1262,7 @@ router.post("/provisioning/provision-teachers", auth(), requireRole(...ADMIN_MAN
   ensureOperationsCollections(db);
   const users = Array.isArray(db.users) ? db.users : [];
   const existingUsernames = getExistingUsernames(db);
-  const plainPassword = String(teacherPassword || "Teacher@123");
+  const plainPassword = String(teacherPassword || randomPassword());
   const hashedPassword = await hashPassword(plainPassword);
   const normalizedTeacherRole = String(teacherRole || "TEACHER").toUpperCase();
   if (!isTeacherRole(normalizedTeacherRole)) {

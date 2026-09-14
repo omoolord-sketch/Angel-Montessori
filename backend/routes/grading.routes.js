@@ -4,9 +4,13 @@ const { nanoid } = require("nanoid");
 const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { SUBJECT_OPTIONS, CLASS_SUBJECTS, normalizeSubject } = require("../lib/subjects");
-const { DEFAULT_CLASSES } = require("../lib/defaultClasses");
 const { isTeacherRole } = require("../lib/roles");
 const { ensureAcademicScope } = require("../lib/academicScope");
+const {
+  ensureAcademicSystemShape,
+  sortAcademicClasses,
+  supportsNigerianCA,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -22,16 +26,16 @@ function nowIso() {
 }
 
 function normalizeKey(value) {
-  return str(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return str(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function toNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
-}
-
-function classIdFromName(name) {
-  return str(name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
 function inferSectionFromClassName(name) {
@@ -45,12 +49,11 @@ function inferSectionFromClassName(name) {
 }
 
 function sortClasses(rows) {
-  return [...(Array.isArray(rows) ? rows : [])].sort((a, b) => {
-    const oa = Number(a.order ?? 999);
-    const ob = Number(b.order ?? 999);
-    if (oa !== ob) return oa - ob;
-    return str(a.name).localeCompare(str(b.name));
-  });
+  return sortAcademicClasses(Array.isArray(rows) ? rows : []);
+}
+
+function supportsNigerianClass(row) {
+  return supportsNigerianCA(row?.id || row?.classId) || supportsNigerianCA(row?.name || row?.className);
 }
 
 function ensureAcademicMeta(db) {
@@ -88,21 +91,9 @@ function ensureAcademicMeta(db) {
     mutated = true;
   });
 
-  const existing = new Set((db.classes || []).map((item) => normalizeKey(item.name)));
-  DEFAULT_CLASSES.forEach((item) => {
-    const key = normalizeKey(item.name);
-    if (existing.has(key)) return;
-    db.classes.push({
-      id: classIdFromName(item.name),
-      name: item.name,
-      section: item.section,
-      order: Number(item.order || 999),
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    });
-    existing.add(key);
-    mutated = true;
-  });
+  const classShapeBefore = JSON.stringify(db.classes || []);
+  ensureAcademicSystemShape(db);
+  if (classShapeBefore !== JSON.stringify(db.classes || [])) mutated = true;
 
   return mutated;
 }
@@ -255,7 +246,8 @@ function isTeacherForOffering(user, offering) {
 
 function getAccessibleOfferings(db, user) {
   const role = str(user?.role).toUpperCase();
-  const offerings = Array.isArray(db.classSubjectOfferings) ? db.classSubjectOfferings : [];
+  const offerings = (Array.isArray(db.classSubjectOfferings) ? db.classSubjectOfferings : [])
+    .filter((item) => supportsNigerianClass(item));
   if (role === "ADMIN") return offerings;
   if (role === "TEACHER") return offerings.filter((item) => str(item.teacherUserId) === str(user.id));
   return [];
@@ -375,12 +367,19 @@ router.get("/metadata", auth(), requireRole("ADMIN", "TEACHER"), (req, res) => {
   const db = readDB();
   const mutated = ensureCollections(db);
 
-  const classes = sortClasses(db.classes || []).map((item) => ({
-    id: str(item.id),
-    name: str(item.name),
-    section: str(item.section || inferSectionFromClassName(item.name)),
-    order: Number(item.order || 999),
-  }));
+  const classes = sortClasses(db.classes || [])
+    .filter((item) => item.isActive !== false && supportsNigerianClass(item))
+    .map((item) => ({
+      id: str(item.id),
+      name: str(item.name),
+      section: str(item.section || inferSectionFromClassName(item.name)),
+      level: str(item.level),
+      academicSystem: str(item.academicSystem),
+      curriculumFramework: str(item.curriculumFramework),
+      assessmentFramework: str(item.assessmentFramework),
+      order: Number(item.order ?? item.displayOrder ?? 999),
+      displayOrder: Number(item.displayOrder ?? item.order ?? 999),
+    }));
 
   writeIfNeeded(db, mutated);
 
@@ -551,6 +550,9 @@ router.post("/offerings", auth(), requireRole("ADMIN"), (req, res) => {
 
   const cls = getClassByInput(db, req.body?.classId || req.body?.className);
   if (!cls) return res.status(400).json({ message: "Invalid class" });
+  if (cls.isActive === false || !supportsNigerianClass(cls)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
 
   const subject = normalizeSubject(req.body?.subject || req.body?.subjectName || "");
   if (!subject) return res.status(400).json({ message: "subject is required" });
@@ -595,6 +597,10 @@ router.post("/offerings", auth(), requireRole("ADMIN"), (req, res) => {
 });
 
 function computeOfferingResults(db, offering, sheet, actorId = "") {
+  if (!supportsNigerianClass(offering)) {
+    throw new Error("Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets.");
+  }
+
   const policy = resolvePolicyForOffering(db, offering, offering?.gradingPolicyId);
   if (!policy) throw new Error("No grading policy mapped to this offering");
 
@@ -719,6 +725,9 @@ router.post("/score-sheets", auth(), requireRole("ADMIN", "TEACHER"), (req, res)
   const mutated = ensureCollections(db);
   const offering = getOfferingById(db, req.body?.classSubjectOfferingId);
   if (!offering) return res.status(400).json({ message: "Invalid classSubjectOfferingId" });
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
   if (!isTeacherForOffering(req.user, offering)) return res.status(403).json({ message: "Forbidden" });
 
   const existing = (db.scoreSheets || []).find(
@@ -754,6 +763,9 @@ router.get("/score-sheets/:sheetId", auth(), requireRole("ADMIN", "TEACHER"), (r
 
   const offering = getOfferingById(db, sheet.classSubjectOfferingId);
   if (!isTeacherForOffering(req.user, offering)) return res.status(403).json({ message: "Forbidden" });
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
 
   writeIfNeeded(db, mutated);
   return res.json(buildSheetDetail(db, sheet));
@@ -768,6 +780,9 @@ router.post("/score-sheets/:sheetId/scores", auth(), requireRole("ADMIN", "TEACH
 
   const offering = getOfferingById(db, sheet.classSubjectOfferingId);
   if (!isTeacherForOffering(req.user, offering)) return res.status(403).json({ message: "Forbidden" });
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
 
   const policy = resolvePolicyForOffering(db, offering, offering.gradingPolicyId);
   const components = getPolicyComponents(db, policy?.id);
@@ -841,6 +856,9 @@ router.post("/score-sheets/:sheetId/submit", auth(), requireRole("ADMIN", "TEACH
   const sheet = db.scoreSheets[idx];
   const offering = getOfferingById(db, sheet.classSubjectOfferingId);
   if (!isTeacherForOffering(req.user, offering)) return res.status(403).json({ message: "Forbidden" });
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
   if (str(sheet.status).toUpperCase() === "LOCKED") return res.status(409).json({ message: "Locked score sheet cannot be submitted" });
 
   db.scoreSheets[idx] = { ...sheet, status: "SUBMITTED", submittedAt: nowIso(), updatedAt: nowIso() };
@@ -867,6 +885,10 @@ router.post("/score-sheets/:sheetId/approve", auth(), requireRole("ADMIN"), (req
   const sheetId = str(req.params.sheetId);
   const idx = (db.scoreSheets || []).findIndex((item) => str(item.id) === sheetId);
   if (idx < 0) return res.status(404).json({ message: "Score sheet not found" });
+  const offering = getOfferingById(db, db.scoreSheets[idx].classSubjectOfferingId);
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
 
   db.scoreSheets[idx] = { ...db.scoreSheets[idx], status: "APPROVED", approvedAt: nowIso(), updatedAt: nowIso() };
 
@@ -902,6 +924,10 @@ router.post("/score-sheets/:sheetId/lock", auth(), requireRole("ADMIN"), (req, r
   const sheetId = str(req.params.sheetId);
   const idx = (db.scoreSheets || []).findIndex((item) => str(item.id) === sheetId);
   if (idx < 0) return res.status(404).json({ message: "Score sheet not found" });
+  const offering = getOfferingById(db, db.scoreSheets[idx].classSubjectOfferingId);
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
 
   if (!["APPROVED", "LOCKED"].includes(str(db.scoreSheets[idx].status).toUpperCase())) {
     return res.status(409).json({ message: "Score sheet must be approved before locking" });
@@ -929,6 +955,9 @@ router.post("/compute/sheets/:sheetId", auth(), requireRole("ADMIN", "TEACHER"),
 
   const offering = getOfferingById(db, sheet.classSubjectOfferingId);
   if (!isTeacherForOffering(req.user, offering)) return res.status(403).json({ message: "Forbidden" });
+  if (!supportsNigerianClass(offering)) {
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian grading score sheets." });
+  }
 
   try {
     const rows = computeOfferingResults(db, offering, sheet, req.user.id);
@@ -943,6 +972,9 @@ router.post("/compute/sheets/:sheetId", auth(), requireRole("ADMIN", "TEACHER"),
 function computeTermSummaries(db, payload, actorId = "") {
   const cls = getClassByInput(db, payload?.classId || payload?.className);
   if (!cls) throw new Error("Class could not be resolved");
+  if (cls.isActive === false || !supportsNigerianClass(cls)) {
+    throw new Error("Early Years classes use EYFS AMES developmental assessment, not Nigerian term summaries.");
+  }
 
   const session = getSessionByInput(db, payload?.sessionId || payload?.sessionName) || (db.academicSessions || [])[0] || null;
   const term = getTermByInput(db, payload?.termId || payload?.termName, session?.id) || (db.terms || []).find((item) => str(item.sessionId) === str(session?.id)) || null;

@@ -31,6 +31,14 @@ const {
   finalizeDonationFailure,
 } = require("../lib/donations");
 const { setActiveAcademicScope, syncAcademicMirrors } = require("../lib/academicScope");
+const {
+  ACTIVE_CLASS_CONFIGS,
+  classIdFromName: academicClassIdFromName,
+  ensureAcademicSystemShape,
+  getApprovedClassConfig,
+  getLegacyClassMapping,
+  sortAcademicClasses,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 const PAYMENT_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "FINANCE_OFFICER"];
@@ -42,24 +50,18 @@ const CURRENT_TERM = String(process.env.CURRENT_TERM || "First Term");
 const CURRENT_SESSION = String(
   process.env.CURRENT_SESSION || `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`
 );
-const PAYMENT_CLASS_SEED = [
-  { name: "Creche", section: "Early Years", order: 1 },
-  { name: "Nursery 1", section: "Early Years", order: 2 },
-  { name: "Nursery 2", section: "Early Years", order: 3 },
-  { name: "Reception", section: "Early Years", order: 4 },
-  { name: "Basic 1", section: "Primary", order: 10 },
-  { name: "Basic 2", section: "Primary", order: 11 },
-  { name: "Basic 3", section: "Primary", order: 12 },
-  { name: "Basic 4", section: "Primary", order: 13 },
-  { name: "Basic 5", section: "Primary", order: 14 },
-  { name: "Basic 6", section: "Primary", order: 15 },
-  { name: "JSS1", section: "Junior Secondary", order: 20 },
-  { name: "JSS2", section: "Junior Secondary", order: 21 },
-  { name: "JSS3", section: "Junior Secondary", order: 22 },
-  { name: "SS1", section: "Senior Secondary", order: 30 },
-  { name: "SS2", section: "Senior Secondary", order: 31 },
-  { name: "SS3", section: "Senior Secondary", order: 32 },
-];
+const PAYMENT_CLASS_SEED = ACTIVE_CLASS_CONFIGS.map((item) => ({
+  id: item.id,
+  name: item.name,
+  section: item.section,
+  order: item.displayOrder,
+  displayOrder: item.displayOrder,
+  level: item.level,
+  academicSystem: item.academicSystem,
+  curriculumFramework: item.curriculumFramework,
+  assessmentFramework: item.assessmentFramework,
+  isActive: true,
+}));
 
 const SUPPORTED_PAYMENT_PROVIDERS = ["REMITA", "PAYSTACK", "MOCK"];
 
@@ -267,14 +269,15 @@ function createReference(prefix) {
 }
 
 function normalizeClassKey(value) {
-  return str(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return str(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function classIdFromName(name) {
-  return str(name)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return academicClassIdFromName(name);
 }
 
 const FEE_CATEGORIES = [
@@ -398,12 +401,8 @@ function ensureClassCatalog(db) {
     });
   }
 
-  db.classes = Array.from(byId.values()).sort((a, b) => {
-    const orderA = Number(a.order ?? 999);
-    const orderB = Number(b.order ?? 999);
-    if (orderA !== orderB) return orderA - orderB;
-    return str(a.name).localeCompare(str(b.name));
-  });
+  db.classes = sortAcademicClasses(Array.from(byId.values()));
+  ensureAcademicSystemShape(db);
   db.financeSections = (db.financeSections || []).sort((a, b) => Number(a.order || 999) - Number(b.order || 999));
 }
 function createStudentIdResolver(db) {
@@ -2344,12 +2343,15 @@ function buildFinanceSetupPayload(db) {
       order: Number(row.order || 999),
       isActive: row.isActive === undefined ? true : normalizeBool(row.isActive),
     })),
-    classes: (db.classes || []).map((row) => ({
+    classes: sortAcademicClasses((db.classes || []).filter((row) => row.isActive !== false)).map((row) => ({
       id: str(row.id),
       name: str(row.name),
       section: str(row.section),
       sectionId: str(row.sectionId),
       order: Number(row.order || 999),
+      academicSystem: str(row.academicSystem),
+      curriculumFramework: str(row.curriculumFramework),
+      assessmentFramework: str(row.assessmentFramework),
     })),
     feeCategories: FEE_CATEGORIES,
     feeTypes: (db.feeTypes || []).map((row) => ({
@@ -3180,7 +3182,7 @@ router.get("/admin/school-structure", auth(), requireRole(...PAYMENT_ADMIN_ROLES
       order: Number(row.order || 999),
       isActive: row.isActive === undefined ? true : normalizeBool(row.isActive),
     })),
-    classes: (db.classes || []).map((row) => ({
+    classes: sortAcademicClasses((db.classes || []).filter((row) => row.isActive !== false)).map((row) => ({
       id: str(row.id),
       name: str(row.name),
       sectionId: str(row.sectionId),
@@ -3272,6 +3274,11 @@ router.post("/admin/school-structure/classes", auth(), requireRole(...PAYMENT_AD
 
   const className = str(req.body?.name || req.body?.className);
   if (!className) return res.status(400).json({ message: "Class name is required" });
+  const approvedClass = getApprovedClassConfig(className);
+  const legacyClass = getLegacyClassMapping(className);
+  if (legacyClass) {
+    return res.status(400).json({ message: `${className} is preserved for history only. Use ${legacyClass.targetClassName || "an active class"} for new fee setup.` });
+  }
   const duplicate = (db.classes || []).find((row) => normalizeClassKey(row.name) === normalizeClassKey(className));
   if (duplicate) return res.status(409).json({ message: "Class already exists" });
 
@@ -3284,11 +3291,16 @@ router.post("/admin/school-structure/classes", auth(), requireRole(...PAYMENT_AD
 
   const now = nowIso();
   const row = {
-    id: nanoid(),
-    name: className,
+    id: approvedClass?.id || nanoid(),
+    name: approvedClass?.name || className,
     sectionId: str(section.id),
-    section: str(section.sectionName || section.name),
-    order: Number(req.body?.order || 999),
+    section: approvedClass?.section || str(section.sectionName || section.name),
+    order: Number(approvedClass?.displayOrder || req.body?.order || 999),
+    displayOrder: Number(approvedClass?.displayOrder || req.body?.order || 999),
+    level: approvedClass?.level || "",
+    academicSystem: approvedClass?.academicSystem || "",
+    curriculumFramework: approvedClass?.curriculumFramework || "",
+    assessmentFramework: approvedClass?.assessmentFramework || "",
     isActive: req.body?.isActive === undefined ? true : normalizeBool(req.body.isActive),
     createdAt: now,
     updatedAt: now,

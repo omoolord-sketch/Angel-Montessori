@@ -81,7 +81,7 @@ const desktopDropdownMap = {
       label: "Academic Journey",
       to: "/academics",
       children: [
-        { label: "Creche", to: "/academics/creche" },
+        { label: "Crèche", to: "/academics/creche" },
         { label: "Reception", to: "/academics/reception" },
         { label: "Basic School", to: "/academics/basic-school" },
         { label: "Junior Secondary", to: "/academics/junior-secondary" },

@@ -2,6 +2,7 @@ const express = require("express");
 const { randomUUID } = require("crypto");
 const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
+const { ensureAcademicSystemShape, sortAcademicClasses } = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -1097,6 +1098,9 @@ function buildDriverTransportOverview(db, user = {}) {
 
 router.get("/setup", auth(), requireRole("ADMIN", "TRANSPORT_ADMIN"), (req, res) => {
   const db = ensureTransportCollections(readDB());
+  const classShapeBefore = JSON.stringify(db.classes || []);
+  ensureAcademicSystemShape(db);
+  if (classShapeBefore !== JSON.stringify(db.classes || [])) writeDB(db);
   const maps = getMaps(db);
   const activeSession = getActiveSession(db);
   const activeTerm = getActiveTerm(db, activeSession?.id);
@@ -1116,7 +1120,7 @@ router.get("/setup", auth(), requireRole("ADMIN", "TRANSPORT_ADMIN"), (req, res)
   res.json({
     sessions: Array.isArray(db.academicSessions) ? db.academicSessions : [],
     terms: Array.isArray(db.terms) ? db.terms : [],
-    classes: Array.isArray(db.classes) ? db.classes : [],
+    classes: sortAcademicClasses((Array.isArray(db.classes) ? db.classes : []).filter((row) => row.isActive !== false)),
     students,
     invoices: Array.isArray(db.invoices) ? db.invoices : [],
     activeSessionId: safeString(activeSession?.id),

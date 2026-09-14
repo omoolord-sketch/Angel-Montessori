@@ -28,7 +28,7 @@ const heroSlides = [
 
 const stats = [
   { value: "Since 2015", label: "Growing from a coaching vision" },
-  { value: "Creche - SSS 3", label: "Complete learning pathway" },
+  { value: "Crèche - SS3", label: "Complete learning pathway" },
   { value: "NERDC + Montessori", label: "Blended curriculum model" },
   { value: "CBT & E-Library", label: "Technology-supported learning" },
   { value: "Owo, Ondo State", label: "Rooted in community" },
@@ -76,7 +76,7 @@ const activities = [
 const pathways = [
   {
     title: "Academics",
-    copy: "Follow the learning path from Creche to Senior Secondary, including curriculum, E-Library, CBT, and academic support.",
+    copy: "Follow the learning path from Crèche to Senior Secondary, including curriculum, E-Library, CBT, and academic support.",
     to: "/academics",
   },
   {
@@ -104,7 +104,7 @@ const pathways = [
 const schoolStrengths = [
   "Founded on a 2015 vision",
   "Formal school opened in 2016",
-  "Creche to Senior Secondary pathway",
+  "Crèche to Senior Secondary pathway",
   "Montessori and NERDC blend",
   "Character, discipline, and care",
   "Portal-supported family communication",
@@ -457,7 +457,7 @@ export default function HomePage() {
               affordable, values-driven education in a nurturing environment.
             </p>
             <p>
-              From Creche and Reception through Basic School, Junior Secondary, and Senior Secondary, the school blends
+              From Crèche, Nursery and Reception through Basic School, Junior Secondary, and Senior Secondary, the school blends
               Montessori principles, the NERDC curriculum, and technology-supported learning so pupils are prepared
               both for examinations and for life.
             </p>

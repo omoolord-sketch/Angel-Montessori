@@ -67,6 +67,15 @@ import TeacherProfilesDashboard from "./pages/TeacherProfilesDashboard";
 import AcademicCalendarDashboard from "./pages/AcademicCalendarDashboard";
 import SchemeOfWorkDashboard from "./pages/SchemeOfWorkDashboard";
 import LessonNotesDashboard from "./pages/LessonNotesDashboard";
+import AcademicSystemsDashboard from "./pages/AcademicSystemsDashboard";
+import EarlyYearsCurriculumDashboard from "./pages/EarlyYearsCurriculumDashboard";
+import EarlyYearsPlanningDashboard from "./pages/EarlyYearsPlanningDashboard";
+import EarlyYearsAssessmentDashboard from "./pages/EarlyYearsAssessmentDashboard";
+import ReceptionLiteracyDashboard from "./pages/ReceptionLiteracyDashboard";
+import EarlyYearsEnvironmentDashboard from "./pages/EarlyYearsEnvironmentDashboard";
+import EarlyYearsInclusionDashboard from "./pages/EarlyYearsInclusionDashboard";
+import EarlyYearsReportingDashboard from "./pages/EarlyYearsReportingDashboard";
+import EarlyYearsQADashboard from "./pages/EarlyYearsQADashboard";
 import { publicContentRoutes } from "./content/publicSiteContent";
 
 const adminLmsRoutes = [
@@ -221,6 +230,84 @@ const lessonNotesTeacherRoutes = [
   "/teacher/lesson-notes/export",
 ];
 
+const earlyYearsCurriculumRoutes = [
+  "/dashboard/early-years-curriculum",
+  "/admin/early-years/curriculum",
+  "/portal/admin/early-years/curriculum",
+  "/teacher/early-years/curriculum",
+  "/teacher/my-curriculum",
+];
+
+const earlyYearsPlanningRoutes = [
+  "/dashboard/early-years-planning",
+  "/admin/early-years/planning",
+  "/portal/admin/early-years/planning",
+  "/teacher/early-years/plans",
+];
+
+const earlyYearsPlanDetailRoutes = [
+  "/admin/early-years/plans/:planId",
+  "/portal/admin/early-years/plans/:planId",
+  "/teacher/early-years/plans/:planId",
+];
+
+const earlyYearsAssessmentRoutes = [
+  "/dashboard/early-years-assessment",
+  "/admin/early-years/assessment",
+  "/portal/admin/early-years/assessment",
+  "/teacher/early-years/assessment",
+  "/parent/early-years/journal",
+  "/portal/parent/early-years/journal",
+];
+
+const receptionLiteracyRoutes = [
+  "/dashboard/reception-literacy",
+  "/admin/early-years/reception-literacy",
+  "/portal/admin/early-years/reception-literacy",
+  "/teacher/early-years/reception-literacy",
+  "/teacher/early-years/phonics",
+  "/parent/reception-literacy",
+  "/portal/parent/reception-literacy",
+];
+
+const earlyYearsEnvironmentRoutes = [
+  "/dashboard/early-years-environment",
+  "/admin/early-years/environment",
+  "/portal/admin/early-years/environment",
+  "/teacher/early-years/environment",
+  "/teacher/early-years/classroom-environment",
+];
+
+const earlyYearsInclusionRoutes = [
+  "/dashboard/early-years-inclusion",
+  "/admin/early-years/inclusion",
+  "/portal/admin/early-years/inclusion",
+  "/teacher/early-years/inclusion",
+  "/teacher/early-years/support",
+  "/parent/early-years/support",
+  "/portal/parent/early-years/support",
+];
+
+const earlyYearsReportingRoutes = [
+  "/dashboard/early-years-reports",
+  "/admin/early-years/reports",
+  "/portal/admin/early-years/reports",
+  "/teacher/early-years/reports",
+  "/teacher/early-years/reception-reference",
+  "/teacher/early-years/basic-1-transition",
+  "/teacher/incoming-transition",
+  "/parent/early-years/reports",
+  "/portal/parent/early-years/reports",
+];
+
+const earlyYearsQARoutes = [
+  "/dashboard/early-years-qa",
+  "/admin/early-years/qa",
+  "/portal/admin/early-years/qa",
+  "/teacher/early-years/qa",
+  "/teacher/early-years/my-quality-tasks",
+];
+
 export default function App() {
   return (
     <AuthProvider>
@@ -329,6 +416,9 @@ export default function App() {
             />
 
             <Route path="/dashboard/student-registry" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER"]}><StudentRegistryDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/academic-systems" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER"]}><AcademicSystemsDashboard /></ProtectedRoute>} />
+            <Route path="/admin/academic-systems" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER"]}><AcademicSystemsDashboard /></ProtectedRoute>} />
+            <Route path="/portal/admin/academic-systems" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER"]}><AcademicSystemsDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/report-card" element={<ProtectedRoute roles={["ADMIN"]}><ReportCardDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/continuous-assessment" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"]}><ContinuousAssessmentDashboard /></ProtectedRoute>} />
             <Route path="/teacher/continuous-assessment" element={<ProtectedRoute roles={["TEACHER"]}><ContinuousAssessmentDashboard /></ProtectedRoute>} />
@@ -434,6 +524,60 @@ export default function App() {
                 key={path}
                 path={path}
                 element={<ProtectedRoute roles={["TEACHER"]}><LessonNotesDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsCurriculumRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"]}><EarlyYearsCurriculumDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsPlanningRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"]}><EarlyYearsPlanningDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsPlanDetailRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"]}><EarlyYearsPlanningDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsAssessmentRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER", "PARENT"]}><EarlyYearsAssessmentDashboard /></ProtectedRoute>} />
+            ))}
+            {receptionLiteracyRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER", "PARENT"]}><ReceptionLiteracyDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsEnvironmentRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"]}><EarlyYearsEnvironmentDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsInclusionRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER", "PARENT"]}><EarlyYearsInclusionDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsReportingRoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER", "PARENT"]}><EarlyYearsReportingDashboard /></ProtectedRoute>} />
+            ))}
+            {earlyYearsQARoutes.map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"]}><EarlyYearsQADashboard /></ProtectedRoute>} />
             ))}
             <Route path="/dashboard/users" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN"]}><UserManagementDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/provisioning" element={<ProtectedRoute roles={["ADMIN", "SUPER_ADMIN"]}><AccountProvisioningDashboard /></ProtectedRoute>} />

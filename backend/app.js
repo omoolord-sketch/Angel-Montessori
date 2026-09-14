@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const { securityHeaders, corsOptionsDelegate } = require("./middleware/security");
 const { createRateLimiter } = require("./middleware/rateLimit");
-const { ensureUploadsRoot } = require("./lib/fileStorage");
+const { ensureUploadsRoot, UPLOADS_ROOT } = require("./lib/fileStorage");
 
 const app = express();
 const frontendBuildPath = path.resolve(__dirname, "..", "frontend", "build");
@@ -49,7 +49,7 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true, message: "Angel Montessori backend is running" });
 });
 
-app.use("/media", express.static(path.join(__dirname, "assets", "uploads"), {
+app.use("/media", express.static(UPLOADS_ROOT, {
   fallthrough: false,
   etag: true,
   maxAge: "7d",
@@ -61,6 +61,15 @@ app.use("/api/public-site", require("./routes/publicSiteProfiles.routes"));
 app.use("/api/academic-calendar", require("./routes/academicCalendar.routes"));
 app.use("/api/scheme-of-work", require("./routes/schemeOfWork.routes"));
 app.use("/api/lesson-notes", require("./routes/lessonNotes.routes"));
+app.use("/api/academic-systems", require("./routes/academicSystems.routes"));
+app.use("/api/early-years/curriculum", require("./routes/earlyYearsCurriculum.routes"));
+app.use("/api/early-years/plans", require("./routes/earlyYearsPlanning.routes"));
+app.use("/api/early-years", require("./routes/earlyYearsAssessment.routes"));
+app.use("/api/early-years", require("./routes/earlyYearsLiteracy.routes"));
+app.use("/api/early-years", require("./routes/earlyYearsEnvironment.routes"));
+app.use("/api/early-years", require("./routes/earlyYearsInclusion.routes"));
+app.use("/api/early-years", require("./routes/earlyYearsReporting.routes"));
+app.use("/api/early-years", require("./routes/earlyYearsQA.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/report-card", require("./routes/reportCard.routes"));
 app.use("/api/report-card", require("./routes/broadsheet.routes"));

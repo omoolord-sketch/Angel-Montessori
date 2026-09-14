@@ -10,10 +10,14 @@ process.env.JWT_SECRET = "school-fees-admin-smoke-secret";
 process.env.DATABASE_URL = "";
 process.env.CURRENT_SESSION = "2026/2027";
 process.env.CURRENT_TERM = "Third Term";
+process.env.NODE_ENV = "test";
+process.env.GLOBAL_RATE_LIMIT_MAX = "10000";
 
 const now = new Date().toISOString();
 fs.writeFileSync(dbPath, JSON.stringify({
-  users: [],
+  users: [
+    { id: "admin-smoke", name: "Admin Smoke", username: "admin-smoke", role: "ADMIN", status: "active" },
+  ],
   classes: [
     { id: "basic-1", name: "Basic 1", section: "Basic School", order: 10 },
     { id: "basic-4", name: "Basic 4", section: "Basic School", order: 13 },

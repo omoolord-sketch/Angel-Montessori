@@ -70,6 +70,228 @@ export const saveContinuousAssessmentSettings = (data) => API.post("/continuous-
 export const saveContinuousAssessmentGradingScales = (rows) => API.post("/continuous-assessment/grading-scales", { rows });
 export const publishContinuousAssessmentResults = (data) => API.post("/continuous-assessment/publish", data);
 
+/* ACADEMIC SYSTEMS */
+export const getAcademicSystemsSummary = () => API.get("/academic-systems/summary");
+export const getAcademicSystemClasses = (params) => API.get("/academic-systems/classes", { params });
+export const getAcademicSystemFoundation = () => API.get("/academic-systems/foundation");
+export const getLegacyAcademicClasses = () => API.get("/academic-systems/legacy-classes");
+export const updateAcademicScope = (data) => API.patch("/academic-systems/scope", data || {});
+export const saveLegacyClassMigrationPlan = (classId, data) => API.post(`/academic-systems/legacy-classes/${classId}/migration-plan`, data || {});
+export const migrateLegacyClassStudents = (classId, data) => API.post(`/academic-systems/legacy-classes/${classId}/migrate-students`, data || {});
+
+/* EARLY YEARS CURRICULUM */
+export const getEarlyYearsCurriculumFrameworks = () => API.get("/early-years/curriculum/frameworks");
+export const getEarlyYearsCurriculum = (params) => API.get("/early-years/curriculum", { params });
+export const getEarlyYearsCurriculumWeek = (weekId, params) => API.get(`/early-years/curriculum/weeks/${weekId}`, { params });
+export const searchEarlyYearsCurriculum = (params) => API.get("/early-years/curriculum/search", { params });
+export const getCurrentEarlyYearsCurriculumWeek = (params) => API.get("/early-years/curriculum/current", { params });
+export const getEarlyYearsCurriculumVersion = (versionId) => API.get(`/early-years/curriculum/version/${versionId}`);
+export const getEarlyYearsCurriculumImportStatus = () => API.get("/early-years/curriculum/admin/import-status");
+export const importEarlyYearsCurriculumFile = (data) => API.post("/early-years/curriculum/admin/import", data || {});
+export const validateEarlyYearsCurriculumImport = (data) => API.post("/early-years/curriculum/admin/validate", data || {});
+export const createEarlyYearsCurriculumPlanShell = (weekId, data) => API.post(`/early-years/curriculum/weeks/${weekId}/plans`, data || {});
+
+/* EARLY YEARS PLANNING */
+export const getEarlyYearsPlanningSetup = () => API.get("/early-years/plans/setup");
+export const getEarlyYearsPlans = (params) => API.get("/early-years/plans", { params });
+export const createEarlyYearsWeeklyPlan = (data) => API.post("/early-years/plans", data || {});
+export const getEarlyYearsPlan = (id) => API.get(`/early-years/plans/${id}`);
+export const updateEarlyYearsPlan = (id, data) => API.put(`/early-years/plans/${id}`, data || {});
+export const submitEarlyYearsPlan = (id) => API.post(`/early-years/plans/${id}/submit`, {});
+export const copyEarlyYearsPreviousPlanStructure = (id) => API.post(`/early-years/plans/${id}/copy-previous-structure`, {});
+export const reviewEarlyYearsPlan = (id, data) => API.post(`/early-years/plans/${id}/review`, data || {});
+export const approveEarlyYearsPlan = (id, data) => API.post(`/early-years/plans/${id}/approve`, data || {});
+export const returnEarlyYearsPlan = (id, data) => API.post(`/early-years/plans/${id}/return`, data || {});
+export const getEarlyYearsPlanDailyRecords = (id) => API.get(`/early-years/plans/${id}/daily`);
+export const saveEarlyYearsPlanDailyRecord = (id, data) => API.post(`/early-years/plans/${id}/daily`, data || {});
+export const updateEarlyYearsPlanDailyRecord = (id, dailyId, data) => API.put(`/early-years/plans/${id}/daily/${dailyId}`, data || {});
+export const saveEarlyYearsWeeklyReview = (id, data) => API.post(`/early-years/plans/${id}/weekly-review`, data || {});
+export const getEarlyYearsPlanPrintHtml = (id) => API.get(`/early-years/plans/${id}/print`, { responseType: "text" });
+
+/* EARLY YEARS ASSESSMENT */
+export const getEarlyYearsAssessmentSetup = () => API.get("/early-years/assessment/setup");
+export const getEarlyYearsAssessmentStudents = (params) => API.get("/early-years/students", { params });
+export const getEarlyYearsObservations = (params) => API.get("/early-years/observations", { params });
+export const createEarlyYearsObservation = (data) => API.post("/early-years/observations", data || {});
+export const getEarlyYearsObservation = (id) => API.get(`/early-years/observations/${id}`);
+export const updateEarlyYearsObservation = (id, data) => API.put(`/early-years/observations/${id}`, data || {});
+export const completeEarlyYearsObservation = (id) => API.post(`/early-years/observations/${id}/complete`, {});
+export const reviewEarlyYearsObservation = (id, data) => API.post(`/early-years/observations/${id}/review`, data || {});
+export const publishEarlyYearsObservation = (id, data) => API.post(`/early-years/observations/${id}/publish`, data || {});
+export const getEarlyYearsChildProfile = (studentId) => API.get(`/early-years/students/${studentId}/profile`);
+export const updateEarlyYearsChildProfile = (studentId, data) => API.put(`/early-years/students/${studentId}/profile`, data || {});
+export const getEarlyYearsStudentJournal = (studentId, params) => API.get(`/early-years/students/${studentId}/journal`, { params });
+export const createEarlyYearsJournalEntry = (studentId, data) => API.post(`/early-years/students/${studentId}/journal`, data || {});
+export const getEarlyYearsStudentDevelopment = (studentId, params) => API.get(`/early-years/students/${studentId}/development`, { params });
+export const createEarlyYearsDevelopmentSummary = (studentId, data) => API.post(`/early-years/students/${studentId}/summaries`, data || {});
+export const updateEarlyYearsDevelopmentSummary = (id, data) => API.put(`/early-years/summaries/${id}`, data || {});
+export const getEarlyYearsNextSteps = (params) => API.get("/early-years/next-steps", { params });
+export const updateEarlyYearsNextStep = (id, data) => API.put(`/early-years/next-steps/${id}`, data || {});
+export const getEarlyYearsEvidenceCoverage = (params) => API.get("/early-years/coverage", { params });
+export const getEarlyYearsParentContributions = (params) => API.get("/early-years/parent-contributions", { params });
+export const createEarlyYearsParentContribution = (data) => API.post("/early-years/parent-contributions", data || {});
+export const reviewEarlyYearsParentContribution = (id, data) => API.post(`/early-years/parent-contributions/${id}/review`, data || {});
+export const getEarlyYearsJournalPrintHtml = (studentId, params) =>
+  API.get(`/early-years/students/${studentId}/journal/print`, { params, responseType: "text" });
+
+/* RECEPTION LITERACY / PHONICS */
+export const getReceptionLiteracySetup = () => API.get("/early-years/phonics/setup");
+export const getReceptionPhonicsProgrammes = (params) => API.get("/early-years/phonics/programmes", { params });
+export const createReceptionPhonicsProgramme = (data) => API.post("/early-years/phonics/programmes", data || {});
+export const getReceptionPhonicsProgramme = (id) => API.get(`/early-years/phonics/programmes/${id}`);
+export const updateReceptionPhonicsProgramme = (id, data) => API.put(`/early-years/phonics/programmes/${id}`, data || {});
+export const activateReceptionPhonicsProgramme = (id) => API.post(`/early-years/phonics/programmes/${id}/activate`, {});
+export const getReceptionPhonicsSequence = (id) => API.get(`/early-years/phonics/programmes/${id}/sequence`);
+export const createReceptionPhonicsSequenceUnit = (id, data) => API.post(`/early-years/phonics/programmes/${id}/sequence`, data || {});
+export const getReceptionDecodableBooks = (id) => API.get(`/early-years/phonics/programmes/${id}/books`);
+export const createReceptionDecodableBook = (id, data) => API.post(`/early-years/phonics/programmes/${id}/books`, data || {});
+export const getReceptionPhonicsProgress = (params) => API.get("/early-years/phonics/progress", { params });
+export const createReceptionPhonicsProgress = (data) => API.post("/early-years/phonics/progress", data || {});
+export const updateReceptionPhonicsProgress = (id, data) => API.put(`/early-years/phonics/progress/${id}`, data || {});
+export const getReceptionReadingRecords = (params) => API.get("/early-years/reading", { params });
+export const createReceptionReadingRecord = (data) => API.post("/early-years/reading", data || {});
+export const getReceptionWritingRecords = (params) => API.get("/early-years/writing", { params });
+export const createReceptionWritingRecord = (data) => API.post("/early-years/writing", data || {});
+export const getReceptionLiteracyProfile = (studentId, params) => API.get(`/early-years/literacy/students/${studentId}`, { params });
+export const getReceptionLiteracyClassOverview = (classId, params) => API.get(`/early-years/literacy/class/${classId}`, { params });
+export const getReceptionLiteracySupportPlans = (params) => API.get("/early-years/literacy/support", { params });
+export const createReceptionLiteracySupportPlan = (data) => API.post("/early-years/literacy/support", data || {});
+export const updateReceptionLiteracySupportPlan = (id, data) => API.put(`/early-years/literacy/support/${id}`, data || {});
+export const getReceptionLiteracySummaries = (params) => API.get("/early-years/literacy/summaries", { params });
+export const createReceptionLiteracySummary = (data) => API.post("/early-years/literacy/summaries", data || {});
+export const getReceptionHomeReadingRecords = (params) => API.get("/early-years/literacy/home-reading", { params });
+export const createReceptionHomeReadingRecord = (data) => API.post("/early-years/literacy/home-reading", data || {});
+export const getReceptionLiteracyParentUpdates = (params) => API.get("/early-years/literacy/parent-updates", { params });
+export const createReceptionLiteracyParentUpdate = (data) => API.post("/early-years/literacy/parent-updates", data || {});
+export const getReceptionLiteracyTransitionSnapshot = (studentId) => API.get(`/early-years/literacy/students/${studentId}/transition`);
+export const getReceptionNoInventedSequenceAudit = () => API.get("/early-years/phonics/audit/no-invented-sequence");
+
+/* EARLY YEARS ENVIRONMENT / CONTINUOUS PROVISION */
+export const getEarlyYearsEnvironmentSetup = () => API.get("/early-years/environment/setup");
+export const getEarlyYearsEnvironmentDashboard = (params) => API.get("/early-years/environment/dashboard", { params });
+export const getEarlyYearsProvisionAreas = (params) => API.get("/early-years/environment/areas", { params });
+export const createEarlyYearsProvisionArea = (data) => API.post("/early-years/environment/areas", data || {});
+export const updateEarlyYearsProvisionArea = (id, data) => API.put(`/early-years/environment/areas/${id}`, data || {});
+export const getEarlyYearsProvisionEnhancements = (params) => API.get("/early-years/environment/enhancements", { params });
+export const createEarlyYearsProvisionEnhancement = (data) => API.post("/early-years/environment/enhancements", data || {});
+export const updateEarlyYearsProvisionEnhancement = (id, data) => API.put(`/early-years/environment/enhancements/${id}`, data || {});
+export const getEarlyYearsPracticalLifeActivities = (params) => API.get("/early-years/practical-life", { params });
+export const createEarlyYearsPracticalLifeActivity = (data) => API.post("/early-years/practical-life", data || {});
+export const updateEarlyYearsPracticalLifeActivity = (id, data) => API.put(`/early-years/practical-life/${id}`, data || {});
+export const getEarlyYearsPracticalLifeAssignments = (params) => API.get("/early-years/practical-life/assignments", { params });
+export const createEarlyYearsPracticalLifeAssignment = (data) => API.post("/early-years/practical-life/assignments", data || {});
+export const getEarlyYearsEnvironmentChecklists = (params) => API.get("/early-years/environment/checklists", { params });
+export const createEarlyYearsEnvironmentChecklist = (data) => API.post("/early-years/environment/checklists", data || {});
+export const updateEarlyYearsEnvironmentChecklist = (id, data) => API.put(`/early-years/environment/checklists/${id}`, data || {});
+export const getEarlyYearsEnvironmentChecklistPrintHtml = (id) => API.get(`/early-years/environment/checklists/${id}/print`, { responseType: "text" });
+export const getEarlyYearsEnvironmentActions = (params) => API.get("/early-years/environment/actions", { params });
+export const updateEarlyYearsEnvironmentAction = (id, data) => API.put(`/early-years/environment/actions/${id}`, data || {});
+export const getEarlyYearsResources = (params) => API.get("/early-years/environment/resources", { params });
+export const createEarlyYearsResource = (data) => API.post("/early-years/environment/resources", data || {});
+export const updateEarlyYearsResource = (id, data) => API.put(`/early-years/environment/resources/${id}`, data || {});
+export const getEarlyYearsResourceRequests = (params) => API.get("/early-years/environment/resource-requests", { params });
+export const createEarlyYearsResourceRequest = (data) => API.post("/early-years/environment/resource-requests", data || {});
+export const updateEarlyYearsResourceRequest = (id, data) => API.put(`/early-years/environment/resource-requests/${id}`, data || {});
+export const getEarlyYearsResourceRequestPrintHtml = (id) => API.get(`/early-years/environment/resource-requests/${id}/print`, { responseType: "text" });
+export const getEarlyYearsEnvironmentReviews = (params) => API.get("/early-years/environment/reviews", { params });
+export const createEarlyYearsEnvironmentReview = (data) => API.post("/early-years/environment/reviews", data || {});
+export const getEarlyYearsDisplayReviews = (params) => API.get("/early-years/environment/displays", { params });
+export const createEarlyYearsDisplayReview = (data) => API.post("/early-years/environment/displays", data || {});
+
+/* EARLY YEARS INCLUSION / PARENT PARTNERSHIP */
+export const getEarlyYearsInclusionSetup = () => API.get("/early-years/inclusion/setup");
+export const getEarlyYearsInclusionDashboard = (params) => API.get("/early-years/inclusion/dashboard", { params });
+export const getEarlyYearsSupportProfiles = (params) => API.get("/early-years/inclusion/profiles", { params });
+export const createEarlyYearsSupportProfile = (data) => API.post("/early-years/inclusion/profiles", data || {});
+export const getEarlyYearsSupportProfile = (id) => API.get(`/early-years/inclusion/profiles/${id}`);
+export const updateEarlyYearsSupportProfile = (id, data) => API.put(`/early-years/inclusion/profiles/${id}`, data || {});
+export const getEarlyYearsStudentInclusionProfile = (studentId) => API.get(`/early-years/inclusion/students/${studentId}`);
+export const updateEarlyYearsParentPartnershipProfile = (studentId, data) => API.put(`/early-years/inclusion/students/${studentId}/parent-partnership`, data || {});
+export const createEarlyYearsSupportConcern = (data) => API.post("/early-years/inclusion/concerns", data || {});
+export const updateEarlyYearsSupportConcern = (id, data) => API.put(`/early-years/inclusion/concerns/${id}`, data || {});
+export const createEarlyYearsSupportPlan = (data) => API.post("/early-years/inclusion/support-plans", data || {});
+export const updateEarlyYearsSupportPlan = (id, data) => API.put(`/early-years/inclusion/support-plans/${id}`, data || {});
+export const reviewEarlyYearsSupportPlan = (id, data) => API.post(`/early-years/inclusion/support-plans/${id}/review`, data || {});
+export const getEarlyYearsSupportPlanPrintHtml = (id) => API.get(`/early-years/inclusion/support-plans/${id}/print`, { responseType: "text" });
+export const getEarlyYearsSupportStrategies = (params) => API.get("/early-years/inclusion/strategies", { params });
+export const createEarlyYearsSupportStrategy = (data) => API.post("/early-years/inclusion/strategies", data || {});
+export const createEarlyYearsReferral = (data) => API.post("/early-years/inclusion/referrals", data || {});
+export const updateEarlyYearsReferral = (id, data) => API.put(`/early-years/inclusion/referrals/${id}`, data || {});
+export const createEarlyYearsConsent = (data) => API.post("/early-years/inclusion/consents", data || {});
+export const getEarlyYearsParentMeetings = (params) => API.get("/early-years/parent-partnership/meetings", { params });
+export const createEarlyYearsParentMeeting = (data) => API.post("/early-years/parent-partnership/meetings", data || {});
+export const updateEarlyYearsParentMeeting = (id, data) => API.put(`/early-years/parent-partnership/meetings/${id}`, data || {});
+export const getEarlyYearsParentMeetingPrintHtml = (id) => API.get(`/early-years/parent-partnership/meetings/${id}/print`, { responseType: "text" });
+export const createEarlyYearsParentSupportSummary = (data) => API.post("/early-years/inclusion/parent-summaries", data || {});
+export const createEarlyYearsTransitionPlan = (data) => API.post("/early-years/inclusion/transitions", data || {});
+export const updateEarlyYearsTransitionPlan = (id, data) => API.put(`/early-years/inclusion/transitions/${id}`, data || {});
+export const getEarlyYearsTransitionPrintHtml = (id) => API.get(`/early-years/inclusion/transitions/${id}/print`, { responseType: "text" });
+export const getEarlyYearsInclusionReviewsDue = () => API.get("/early-years/inclusion/reviews-due");
+
+/* EARLY YEARS REPORTING / RECEPTION TRANSITION */
+export const getEarlyYearsReportingSetup = () => API.get("/early-years/reports/setup");
+export const getEarlyYearsReportDashboard = (params) => API.get("/early-years/reports/dashboard", { params });
+export const getEarlyYearsReports = (params) => API.get("/early-years/reports", { params });
+export const createEarlyYearsReport = (data) => API.post("/early-years/reports", data || {});
+export const getEarlyYearsReport = (id) => API.get(`/early-years/reports/${id}`);
+export const updateEarlyYearsReport = (id, data) => API.put(`/early-years/reports/${id}`, data || {});
+export const submitEarlyYearsReport = (id) => API.post(`/early-years/reports/${id}/submit`, {});
+export const returnEarlyYearsReport = (id, data) => API.post(`/early-years/reports/${id}/return`, data || {});
+export const approveEarlyYearsReport = (id, data) => API.post(`/early-years/reports/${id}/approve`, data || {});
+export const publishEarlyYearsReport = (id) => API.post(`/early-years/reports/${id}/publish`, {});
+export const amendEarlyYearsReport = (id, data) => API.post(`/early-years/reports/${id}/amend`, data || {});
+export const archiveEarlyYearsReport = (id) => API.post(`/early-years/reports/${id}/archive`, {});
+export const getEarlyYearsReportPrintHtml = (id) => API.get(`/early-years/reports/${id}/print`, { responseType: "text" });
+export const getEarlyYearsReportArchive = (studentId, params) => API.get(`/early-years/reports/student/${studentId}/archive`, { params });
+export const getEarlyYearsReportTemplates = (params) => API.get("/early-years/reports/templates", { params });
+export const createEarlyYearsReportTemplate = (data) => API.post("/early-years/reports/templates", data || {});
+export const getReceptionEyfsReference = (studentId) => API.get(`/early-years/reception/eyfs-reference/${studentId}`);
+export const createReceptionEyfsReference = (data) => API.post("/early-years/reception/eyfs-reference", data || {});
+export const updateReceptionEyfsReference = (id, data) => API.put(`/early-years/reception/eyfs-reference/${id}`, data || {});
+export const submitReceptionEyfsReference = (id) => API.post(`/early-years/reception/eyfs-reference/${id}/submit`, {});
+export const returnReceptionEyfsReference = (id, data) => API.post(`/early-years/reception/eyfs-reference/${id}/return`, data || {});
+export const approveReceptionEyfsReference = (id, data) => API.post(`/early-years/reception/eyfs-reference/${id}/approve`, data || {});
+export const publishReceptionEyfsReference = (id) => API.post(`/early-years/reception/eyfs-reference/${id}/publish`, {});
+export const getReceptionTransitionProfile = (studentId) => API.get(`/early-years/reception/transition/${studentId}`);
+export const createReceptionTransitionProfile = (data) => API.post("/early-years/reception/transition", data || {});
+export const updateReceptionTransitionProfile = (id, data) => API.put(`/early-years/reception/transition/${id}`, data || {});
+export const submitReceptionTransitionProfile = (id) => API.post(`/early-years/reception/transition/${id}/submit`, {});
+export const approveReceptionTransitionProfile = (id, data) => API.post(`/early-years/reception/transition/${id}/approve`, data || {});
+export const publishReceptionTransitionProfile = (id) => API.post(`/early-years/reception/transition/${id}/publish`, {});
+export const handoverReceptionTransitionProfile = (id, data) => API.post(`/early-years/reception/transition/${id}/handover`, data || {});
+export const acknowledgeReceptionTransitionProfile = (id, data) => API.post(`/early-years/reception/transition/${id}/acknowledge`, data || {});
+export const getReceptionTransitionPrintHtml = (id) => API.get(`/early-years/reception/transition/${id}/print`, { responseType: "text" });
+export const getIncomingReceptionHandovers = (params) => API.get("/early-years/reception/handover/incoming", { params });
+
+/* EARLY YEARS QUALITY ASSURANCE */
+export const getEarlyYearsQASetup = () => API.get("/early-years/qa/setup");
+export const getEarlyYearsQADashboard = (params) => API.get("/early-years/qa/dashboard", { params });
+export const getEarlyYearsQAClass = (classId, params) => API.get(`/early-years/qa/class/${classId}`, { params });
+export const getMyEarlyYearsQATasks = (params) => API.get("/early-years/qa/teacher/me", { params });
+export const getEarlyYearsQACurriculum = (params) => API.get("/early-years/qa/curriculum", { params });
+export const getEarlyYearsQAPlanning = (params) => API.get("/early-years/qa/planning", { params });
+export const getEarlyYearsQAAssessment = (params) => API.get("/early-years/qa/assessment", { params });
+export const getEarlyYearsQAJournal = (params) => API.get("/early-years/qa/journal", { params });
+export const getEarlyYearsQALiteracy = (params) => API.get("/early-years/qa/literacy", { params });
+export const getEarlyYearsQAEnvironment = (params) => API.get("/early-years/qa/environment", { params });
+export const getEarlyYearsQAInclusion = (params) => API.get("/early-years/qa/inclusion", { params });
+export const getEarlyYearsQAParentPartnership = (params) => API.get("/early-years/qa/parent-partnership", { params });
+export const getEarlyYearsQAReporting = (params) => API.get("/early-years/qa/reporting", { params });
+export const getEarlyYearsQATransition = (params) => API.get("/early-years/qa/transition", { params });
+export const getEarlyYearsQADataQuality = (params) => API.get("/early-years/qa/data-quality", { params });
+export const getEarlyYearsQASystemHealth = (params) => API.get("/early-years/qa/system-health", { params });
+export const getEarlyYearsQAGovernanceSummary = (params) => API.get("/early-years/qa/governance-summary", { params });
+export const getEarlyYearsQAActions = (params) => API.get("/early-years/qa/actions", { params });
+export const createEarlyYearsQAAction = (data) => API.post("/early-years/qa/actions", data || {});
+export const updateEarlyYearsQAAction = (id, data) => API.put(`/early-years/qa/actions/${id}`, data || {});
+export const getEarlyYearsQAModeration = (params) => API.get("/early-years/qa/moderation", { params });
+export const createEarlyYearsQAModeration = (data) => API.post("/early-years/qa/moderation", data || {});
+export const updateEarlyYearsQAModeration = (id, data) => API.put(`/early-years/qa/moderation/${id}`, data || {});
+export const createEarlyYearsQAEnvironmentWalk = (data) => API.post("/early-years/qa/environment-walks", data || {});
+export const updateEarlyYearsQAEnvironmentWalk = (id, data) => API.put(`/early-years/qa/environment-walks/${id}`, data || {});
+export const createEarlyYearsQALeadershipNote = (data) => API.post("/early-years/qa/leadership-notes", data || {});
+export const runEarlyYearsQAAudit = (data) => API.post("/early-years/qa/run-audit", data || {});
+
 /* GRADING + PROMOTION */
 export const gradeScore = (score) => API.post("/grading", { score });
 export const getGradingDashboard = () => API.get("/grading/dashboard");
@@ -616,13 +838,3 @@ export const getAdminDonations = (params) => API.get("/admin/donations", { param
 export const getAdminDonationDetail = (id) => API.get(`/admin/donations/${id}`);
 export const updateAdminDonationNote = (id, data) => API.patch(`/admin/donations/${id}/note`, data || {});
 export const exportAdminDonations = (params) => API.get("/admin/donations/export", { params, responseType: "blob" });
-
-
-
-
-
-
-
-
-
-

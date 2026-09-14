@@ -1,48 +1,7 @@
 const CLASS_SUBJECTS = {
-  "Creche": [
-    "Sensory Play",
-    "Music & Rhymes",
-    "Movement & Motor Skills",
-    "Social Interaction",
-    "Early Language Development",
-    "Visual Stimulation",
-    "Health & Hygiene Habits"
-  ],
-  "Nursery 1": [
-    "English Language (Oral)",
-    "Number Work",
-    "Rhymes & Songs",
-    "Colour & Shape Recognition",
-    "Social Habits",
-    "Creative Activities",
-    "Health Habits",
-    "Storytelling",
-    "Physical Play"
-  ],
-  "Nursery 2": [
-    "English Language",
-    "Number Work",
-    "Phonics",
-    "Rhymes",
-    "Writing Readiness",
-    "Social Habits",
-    "Creative Arts",
-    "Health Habits",
-    "Physical Education",
-    "Moral Instruction"
-  ],
-  "Reception": [
-    "English Language",
-    "Phonics",
-    "Mathematics",
-    "Basic Science",
-    "Social Studies",
-    "Creative Arts",
-    "Handwriting",
-    "Computer Awareness",
-    "Physical & Health Education",
-    "Religious Studies"
-  ],
+  "Crèche": [],
+  "Nursery": [],
+  "Reception": [],
   "Basic 1": [
     "English Language",
     "Mathematics",
@@ -160,7 +119,7 @@ const CLASS_SUBJECTS = {
     "French",
     "Religious Studies"
   ],
-  "SSS1": [
+  "SS1": [
     "English Language",
     "Mathematics",
     "Civic Education",
@@ -185,7 +144,7 @@ const CLASS_SUBJECTS = {
     "Fine Arts",
     "Music"
   ],
-  "SSS2": [
+  "SS2": [
     "English Language",
     "Mathematics",
     "Civic Education",
@@ -210,7 +169,7 @@ const CLASS_SUBJECTS = {
     "Fine Arts",
     "Music"
   ],
-  "SSS3": [
+  "SS3": [
     "English Language",
     "Mathematics",
     "Civic Education",
@@ -238,7 +197,11 @@ const CLASS_SUBJECTS = {
 };
 
 function normalizeKey(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 const SUBJECT_OPTIONS = Array.from(
@@ -277,9 +240,12 @@ const SUBJECT_ALIAS_MAP = new Map(
 });
 
 const CLASS_ALIAS_MAP = new Map([
-  [normalizeKey("Creche"), "Creche"],
-  [normalizeKey("Nursery 1"), "Nursery 1"],
-  [normalizeKey("Nursery 2"), "Nursery 2"],
+  [normalizeKey("Creche"), "Crèche"],
+  [normalizeKey("Crèche"), "Crèche"],
+  [normalizeKey("Nursery"), "Nursery"],
+  [normalizeKey("Nursery 1"), "Nursery"],
+  [normalizeKey("Nursery 2"), "Nursery"],
+  [normalizeKey("Kindergarten"), "Reception"],
   [normalizeKey("Reception"), "Reception"],
   [normalizeKey("Basic 1"), "Basic 1"],
   [normalizeKey("Basic 2"), "Basic 2"],
@@ -290,11 +256,23 @@ const CLASS_ALIAS_MAP = new Map([
   [normalizeKey("JSS1"), "JSS1"],
   [normalizeKey("JSS2"), "JSS2"],
   [normalizeKey("JSS3"), "JSS3"],
-  [normalizeKey("SSS1"), "SSS1"],
-  [normalizeKey("SSS2"), "SSS2"],
-  [normalizeKey("SSS3"), "SSS3"],
-  [normalizeKey("Playgroup"), "Nursery 1"],
-  [normalizeKey("Pre-Nursery"), "Nursery 1"],
+  [normalizeKey("JSS 1"), "JSS1"],
+  [normalizeKey("JSS 2"), "JSS2"],
+  [normalizeKey("JSS 3"), "JSS3"],
+  [normalizeKey("SS1"), "SS1"],
+  [normalizeKey("SS2"), "SS2"],
+  [normalizeKey("SS3"), "SS3"],
+  [normalizeKey("SS 1"), "SS1"],
+  [normalizeKey("SS 2"), "SS2"],
+  [normalizeKey("SS 3"), "SS3"],
+  [normalizeKey("SSS1"), "SS1"],
+  [normalizeKey("SSS2"), "SS2"],
+  [normalizeKey("SSS3"), "SS3"],
+  [normalizeKey("SSS 1"), "SS1"],
+  [normalizeKey("SSS 2"), "SS2"],
+  [normalizeKey("SSS 3"), "SS3"],
+  [normalizeKey("Playgroup"), "Nursery"],
+  [normalizeKey("Pre-Nursery"), "Nursery"],
   [normalizeKey("Primary 1"), "Basic 1"],
   [normalizeKey("Primary 2"), "Basic 2"],
   [normalizeKey("Primary 3"), "Basic 3"],

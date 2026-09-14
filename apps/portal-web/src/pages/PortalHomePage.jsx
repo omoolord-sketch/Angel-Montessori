@@ -12,6 +12,10 @@ const enquiryLinks = [
 ];
 
 const adminLinks = [
+  ["/dashboard/academic-systems", "Academic Systems"],
+  ["/dashboard/early-years-curriculum", "Early Years Curriculum"],
+  ["/dashboard/early-years-reports", "Early Years Reports"],
+  ["/dashboard/early-years-qa", "Early Years Quality Assurance"],
   ["/dashboard/student-registry", "Student Registry"],
   ["/dashboard/report-card", "Report Card Dashboard"],
   ["/dashboard/continuous-assessment", "Continuous Assessment"],
@@ -43,6 +47,10 @@ const adminLinks = [
 ];
 
 const superAdminLinks = [
+  ["/dashboard/academic-systems", "Academic Systems"],
+  ["/dashboard/early-years-curriculum", "Early Years Curriculum"],
+  ["/dashboard/early-years-reports", "Early Years Reports"],
+  ["/dashboard/early-years-qa", "Early Years Quality Assurance"],
   ["/dashboard/student-registry", "Student Registry"],
   ["/dashboard/continuous-assessment", "Continuous Assessment"],
   ["/admin/cbt/exams", "CBT Credentials"],
@@ -75,6 +83,9 @@ const hrOfficerLinks = [
 
 const teacherLinks = [
   ["/teacher/subject", "Subject Workspace"],
+  ["/teacher/early-years/curriculum", "Early Years Curriculum"],
+  ["/teacher/early-years/reports", "Early Years Reports"],
+  ["/teacher/early-years/my-quality-tasks", "My Quality Tasks"],
   ["/teacher/continuous-assessment", "Continuous Assessment"],
   ["/dashboard/attendance", "Attendance"],
   ["/dashboard/cbt", "CBT Question Bank"],
@@ -88,6 +99,10 @@ const teacherLinks = [
 ];
 
 const academicOfficerLinks = [
+  ["/dashboard/academic-systems", "Academic Systems"],
+  ["/dashboard/early-years-curriculum", "Early Years Curriculum"],
+  ["/dashboard/early-years-reports", "Early Years Reports"],
+  ["/dashboard/early-years-qa", "Early Years Quality Assurance"],
   ["/dashboard/student-registry", "Student Registry"],
   ["/dashboard/continuous-assessment", "Continuous Assessment"],
   ["/admin/cbt/exams", "CBT Credentials"],
@@ -157,7 +172,7 @@ const roleSummaries = {
   ACADEMIC_OFFICER: {
     title: "Angel Montessori Academic Planning Desk",
     subtitle:
-      "Assign class subjects, register students into the right classes, plan sessions and terms, review lesson delivery, and coordinate academic coverage across Creche, Nursery, Basic, and college classes.",
+      "Assign class subjects, register students into the right classes, plan sessions and terms, review lesson delivery, and coordinate academic coverage across Crèche, Nursery, Basic, and college classes.",
   },
   ADMISSION_OFFICER: {
     title: "Angel Montessori Admissions Desk",
@@ -255,7 +270,7 @@ export default function PortalHomePage() {
                       : role === "STUDENT"
                         ? [["/portal/student", "Student Dashboard"], ["/student/lms/dashboard", "LMS"], ["/cbt/exam", "CBT Exam Login"], ["/dashboard/library", "E-Library"]]
                         : role === "PARENT"
-                          ? [["/portal/parent", "Parent Dashboard"], ["/portal/parent/transport", "Child Transport"], ["/parent/lms/dashboard", "LMS"]]
+                          ? [["/portal/parent", "Parent Dashboard"], ["/portal/parent/early-years/reports", "Early Years Reports"], ["/portal/parent/transport", "Child Transport"], ["/parent/lms/dashboard", "LMS"]]
                           : role === "APPLICANT"
                             ? applicantType === "RECRUITMENT"
                               ? [["/applicant/recruitment", "My Recruitment Dashboard"], ["/cbt/exam", "Assessment Login"]]

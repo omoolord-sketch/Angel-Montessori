@@ -30,6 +30,7 @@ import {
   updateCbtSettings,
 } from "../api/services";
 import { useAuth } from "../auth/AuthContext";
+import { ACTIVE_CLASS_NAMES, normalizeAcademicClassKey } from "../utils/academicSystems";
 
 const ADMIN_MODULES = [
   { id: "overview", label: "Overview" },
@@ -238,24 +239,7 @@ export default function CBTDashboard() {
     return classSubjectMap[examForm.className] || metadata?.subjects || [];
   }, [examForm.className, examForm.targetAudience, classSubjectMap, metadata]);
 
-  const defaultClassNames = [
-    "Creche",
-    "Nursery 1",
-    "Nursery 2",
-    "Reception",
-    "Basic 1",
-    "Basic 2",
-    "Basic 3",
-    "Basic 4",
-    "Basic 5",
-    "Basic 6",
-    "JSS1",
-    "JSS2",
-    "JSS3",
-    "SSS1",
-    "SSS2",
-    "SSS3",
-  ];
+  const defaultClassNames = ACTIVE_CLASS_NAMES;
 
   const classOptions = useMemo(() => {
     const out = [];
@@ -264,7 +248,7 @@ export default function CBTDashboard() {
     const add = (item) => {
       const className = String(item?.className || item?.name || "").trim();
       if (!className) return;
-      const key = className.toLowerCase();
+      const key = normalizeAcademicClassKey(className);
       if (seen.has(key)) return;
       seen.add(key);
       out.push({

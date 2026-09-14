@@ -2,20 +2,32 @@
 const { nanoid } = require("nanoid");
 const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
+const {
+  ensureAcademicSystemShape,
+  getLegacyClassMapping,
+  sortAcademicClasses,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 
 router.get("/", auth(), requireRole("ADMIN", "TEACHER"), (req, res) => {
   const db = readDB();
-  const classes = (db.classes || []).slice().sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  ensureAcademicSystemShape(db);
+  writeDB(db);
+  const classes = sortAcademicClasses((db.classes || []).filter((item) => item.isActive !== false));
   res.json(classes);
 });
 
 router.post("/", auth(), requireRole("ADMIN"), (req, res) => {
   const { name, section, order } = req.body || {};
   if (!name || !section) return res.status(400).json({ message: "name and section are required" });
+  const legacy = getLegacyClassMapping(name);
+  if (legacy) {
+    return res.status(400).json({ message: `${name} is preserved for history only. Use ${legacy.targetClassName || "an active class"} for new records.` });
+  }
 
   const db = readDB();
+  ensureAcademicSystemShape(db);
   const newClass = {
     id: nanoid(),
     name: String(name).trim(),

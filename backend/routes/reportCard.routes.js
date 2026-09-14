@@ -7,6 +7,14 @@ const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { normalizeSubject, getSubjectsForClassName } = require("../lib/subjects");
 const { ensureDefaultClasses, DEFAULT_CLASSES } = require("../lib/defaultClasses");
+const {
+  ensureAcademicSystemShape,
+  enrichClassConfig,
+  getApprovedClassConfig,
+  getLegacyClassMapping,
+  sortAcademicClasses,
+  supportsNigerianCA,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 const BROADSHEET_TYPES = new Set(["summary", "detailed", "early_years", "exam_office"]);
@@ -16,7 +24,11 @@ const SCHOOL_EMAIL = String(process.env.SCHOOL_EMAIL || "info@angelmontessori.ng
 const SCHOOL_PHONE = String(process.env.SCHOOL_PHONE || "+234 803 506 7767").trim();
 
 function normalizeClassKey(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function classIdFromName(name) {
@@ -38,31 +50,9 @@ function isConnectionError(err) {
 
 function ensureDefaultClassesInJsonStore() {
   const db = readDB();
-  const classes = Array.isArray(db.classes) ? db.classes : [];
-  const existingKeys = new Set(classes.map((item) => normalizeClassKey(item.name)));
-
-  for (const item of DEFAULT_CLASSES) {
-    const key = normalizeClassKey(item.name);
-    if (existingKeys.has(key)) continue;
-
-    classes.push({
-      id: classIdFromName(item.name),
-      name: item.name,
-      section: item.section,
-      order: item.order,
-    });
-    existingKeys.add(key);
-  }
-
-  db.classes = classes;
+  ensureAcademicSystemShape(db);
   writeDB(db);
-
-  return [...classes].sort((a, b) => {
-    const orderA = Number(a.order ?? 999);
-    const orderB = Number(b.order ?? 999);
-    if (orderA !== orderB) return orderA - orderB;
-    return String(a.name || "").localeCompare(String(b.name || ""));
-  });
+  return sortAcademicClasses(db.classes || []);
 }
 
 function getJsonClassMaps() {
@@ -287,9 +277,11 @@ router.get("/classes", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_OFF
   try {
     await ensureDefaultClasses(prisma);
     const classes = await prisma.class.findMany({ orderBy: [{ order: "asc" }, { name: "asc" }] });
-    return res.json(classes);
+    return res.json(
+      sortAcademicClasses(classes.map((item) => enrichClassConfig(item)).filter((item) => item.isActive !== false))
+    );
   } catch {
-    return res.json(ensureDefaultClassesInJsonStore());
+    return res.json(ensureDefaultClassesInJsonStore().filter((item) => item.isActive !== false));
   }
 });
 
@@ -301,9 +293,18 @@ router.post("/classes", auth(), requireRole("ADMIN"), async (req, res) => {
   });
 
   const data = schema.parse(req.body);
+  const approvedClass = getApprovedClassConfig(data.name);
+  const legacyClass = getLegacyClassMapping(data.name);
+  if (legacyClass) {
+    return res.status(400).json({ message: `${data.name} is preserved for history only. Use ${legacyClass.targetClassName || "an active class"} for new records.` });
+  }
 
   try {
-    const cls = await prisma.class.create({ data });
+    const cls = await prisma.class.create({
+      data: approvedClass
+        ? { name: approvedClass.name, section: approvedClass.section, order: approvedClass.displayOrder }
+        : data,
+    });
     return res.status(201).json(cls);
   } catch (err) {
     if (!isConnectionError(err)) {
@@ -316,11 +317,18 @@ router.post("/classes", auth(), requireRole("ADMIN"), async (req, res) => {
     const exists = classes.some((item) => normalizeClassKey(item.name) === key);
     if (exists) return res.status(409).json({ message: "Class already exists" });
 
+    const displayOrder = approvedClass?.displayOrder ?? data.order ?? 999;
     const cls = {
-      id: classIdFromName(data.name),
-      name: data.name,
-      section: data.section,
-      order: data.order ?? 999,
+      id: approvedClass?.id || classIdFromName(data.name),
+      name: approvedClass?.name || data.name,
+      section: approvedClass?.section || data.section,
+      order: displayOrder,
+      displayOrder,
+      level: approvedClass?.level || "",
+      academicSystem: approvedClass?.academicSystem || "",
+      curriculumFramework: approvedClass?.curriculumFramework || "",
+      assessmentFramework: approvedClass?.assessmentFramework || "",
+      isActive: true,
     };
 
     classes.push(cls);
@@ -404,6 +412,10 @@ router.post("/students", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_O
   try {
     const cls = await prisma.class.findUnique({ where: { id: classId } });
     if (!cls) return res.status(400).json({ message: "Invalid classId" });
+    const currentClass = enrichClassConfig(cls);
+    if (currentClass.isActive === false) {
+      return res.status(400).json({ message: "This class is preserved for history only. Select an active AMES class." });
+    }
 
     const student = await prisma.student.create({ data: { name: resolvedName, classId } });
 
@@ -486,6 +498,9 @@ router.post("/students", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_O
     const { byId } = getJsonClassMaps();
     const cls = byId.get(String(classId));
     if (!cls) return res.status(400).json({ message: "Invalid classId" });
+    if (cls.isActive === false) {
+      return res.status(400).json({ message: "This class is preserved for history only. Select an active AMES class." });
+    }
 
     const now = new Date().toISOString();
     const student = {
@@ -591,6 +606,10 @@ router.patch("/students/:id", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADE
     const nextClassId = String(body.classId || before.classId || "").trim();
     const cls = await prisma.class.findUnique({ where: { id: nextClassId } });
     if (!cls) return res.status(400).json({ message: "Invalid classId" });
+    const currentClass = enrichClassConfig(cls);
+    if (currentClass.isActive === false) {
+      return res.status(400).json({ message: "This class is preserved for history only. Select an active AMES class." });
+    }
 
     const resolvedName = buildStudentName(body.firstName, body.lastName, body.name || before.name);
     if (!resolvedName) {
@@ -667,6 +686,9 @@ router.patch("/students/:id", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADE
     const { byId } = getJsonClassMaps();
     const cls = byId.get(String(body.classId || current.classId || ""));
     if (!cls) return res.status(400).json({ message: "Invalid classId" });
+    if (cls.isActive === false) {
+      return res.status(400).json({ message: "This class is preserved for history only. Select an active AMES class." });
+    }
 
     const resolvedName = buildStudentName(body.firstName, body.lastName, body.name || current.name);
     if (!resolvedName) {
@@ -914,6 +936,9 @@ router.post("/results", auth(), requireRole("ADMIN", "TEACHER"), async (req, res
 
   const lockCheck = await ensureNotLocked(data.studentId, data.session, data.term);
   if (!lockCheck.ok) return res.status(lockCheck.status).json({ message: lockCheck.message });
+  if (!supportsNigerianCA({ name: lockCheck.student.className, className: lockCheck.student.className })) {
+    return res.status(400).json({ message: "Early Years learners use EYFS AMES developmental reports, not Nigerian score report cards." });
+  }
 
   const allowed = getSubjectsForClassName(lockCheck.student.className);
   if (allowed.length > 0 && !allowed.includes(canonicalSubject)) {
@@ -1003,6 +1028,9 @@ router.put("/results/:id", auth(), requireRole("ADMIN", "TEACHER"), async (req, 
 
   const lockCheck = await ensureNotLocked(before.studentId, session, term);
   if (!lockCheck.ok) return res.status(lockCheck.status).json({ message: lockCheck.message });
+  if (!supportsNigerianCA({ name: lockCheck.student.className, className: lockCheck.student.className })) {
+    return res.status(400).json({ message: "Early Years learners use EYFS AMES developmental reports, not Nigerian score report cards." });
+  }
 
   const allowed = getSubjectsForClassName(lockCheck.student.className);
   if (allowed.length > 0 && !allowed.includes(nextSubject)) {
@@ -1138,6 +1166,9 @@ router.post("/reports", auth(), requireRole("ADMIN", "TEACHER"), async (req, res
 
   const lockCheck = await ensureNotLocked(body.studentId, body.session, body.term);
   if (!lockCheck.ok) return res.status(lockCheck.status).json({ message: lockCheck.message });
+  if (!supportsNigerianCA({ name: lockCheck.student.className, className: lockCheck.student.className })) {
+    return res.status(400).json({ message: "Early Years learners use EYFS AMES developmental reports, not Nigerian score report cards." });
+  }
 
   const payload = {
     studentId: body.studentId,

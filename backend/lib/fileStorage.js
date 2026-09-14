@@ -2,7 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const { nanoid } = require("nanoid");
 
-const UPLOADS_ROOT = path.join(__dirname, "..", "assets", "uploads");
+function resolveUploadsRoot() {
+  const configuredPath = String(process.env.UPLOADS_ROOT_PATH || process.env.AMS_UPLOADS_ROOT_PATH || "").trim();
+  if (!configuredPath) return path.join(__dirname, "..", "assets", "uploads");
+  return path.resolve(configuredPath);
+}
+
+const UPLOADS_ROOT = resolveUploadsRoot();
 const MIME_EXTENSION_MAP = {
   "application/pdf": ".pdf",
   "application/msword": ".doc",

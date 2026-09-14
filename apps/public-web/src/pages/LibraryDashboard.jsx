@@ -3,7 +3,7 @@ import { addBook, getBooks } from "../api/services";
 import { useAuth } from "../auth/AuthContext";
 
 const FALLBACK_STRUCTURE = [
-  { section: "Early Years Library", subcategories: ["Creche", "Nursery 1", "Nursery 2", "Reception"] },
+  { section: "Early Years Library", subcategories: ["Crèche", "Nursery", "Reception"] },
   { section: "Basic School Library", subcategories: ["Basic 1", "Basic 2", "Basic 3", "Basic 4", "Basic 5", "Basic 6"] },
   { section: "Junior Secondary Library", subcategories: ["JSS1", "JSS2", "JSS3"] },
   { section: "Senior Secondary Library", subcategories: ["SS1", "SS2", "SS3"] },

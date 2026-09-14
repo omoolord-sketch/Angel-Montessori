@@ -4,7 +4,7 @@ const XLSX = require("xlsx");
 const { auth, requireRole } = require("../middleware/auth");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { normalizeSubject, getSubjectsForClassName } = require("../lib/subjects");
-const { ensureDefaultClassesInJsonStore } = require("../lib/defaultClasses");
+const { ensureAcademicSystemShape, sortAcademicClasses, supportsNigerianCA } = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -95,11 +95,17 @@ function buildLines(payload, detailed = false) {
   return out;
 }
 function normalizeClassKey(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function classMap(db) {
-  const rows = Array.isArray(db.classes) ? [...db.classes] : [];
+  ensureAcademicSystemShape(db);
+  const rows = sortAcademicClasses(Array.isArray(db.classes) ? db.classes : [])
+    .filter((row) => row.isActive !== false && (supportsNigerianCA(row.id) || supportsNigerianCA(row.name)));
   const byId = new Map();
   const byName = new Map();
   rows.forEach((row) => {
@@ -560,7 +566,14 @@ function resolvePayload(req, source = {}, fallbackType = "summary") {
     return { payload: payloadFromSnapshot(db, snap), snapshot: snap, db };
   }
 
-  return { payload: buildPayload(req, source, fallbackType), snapshot: null, db };
+  const payload = buildPayload(req, source, fallbackType);
+  const classes = classMap(db);
+  if (!classes.byId.has(s(payload.class?.id || payload.classId))) {
+    const err = new Error("Broadsheets are available for Basic, JSS and SS classes only.");
+    err.status = 400;
+    throw err;
+  }
+  return { payload, snapshot: null, db };
 }
 
 router.get("/broadsheet/dashboard", auth(), requireRole("ADMIN", "TEACHER"), (req, res) => {
@@ -588,6 +601,9 @@ router.post("/broadsheet/generate", auth(), requireRole("ADMIN", "TEACHER"), (re
     const payload = buildPayload(req, req.body || {}, s(req.body?.broadsheetType || "summary"));
     const db = readDB();
     ensureCollections(db);
+    if (!classMap(db).byId.has(s(payload.class?.id || payload.classId))) {
+      return res.status(400).json({ message: "Broadsheets are available for Basic, JSS and SS classes only." });
+    }
     const snapshot = bool(req.body?.createSnapshot, true) ? saveSnapshot(db, payload, req.user) : null;
     if (snapshot) writeDB(db);
     return res.json({ payload: { ...payload, snapshotId: s(snapshot?.id), snapshotStatus: s(snapshot?.status) }, snapshot });

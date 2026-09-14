@@ -400,6 +400,7 @@ function migrateLegacyFeeInvoices(db, { now, defaultSession, defaultTerm }) {
     const invoiceId = nanoid();
     const invoiceNumber = createFinanceDocumentNumber(db.invoices || [], "INV", now);
     const amount = normalizeMoney(legacy.amount);
+    const student = students.find((row) => str(row.id) === studentId);
 
     db.invoices.unshift({
       id: invoiceId,
@@ -453,7 +454,6 @@ function migrateLegacyFeeInvoices(db, { now, defaultSession, defaultTerm }) {
       createdAt: now,
     });
 
-    const student = students.find((row) => str(row.id) === studentId);
     if (student && !str(student.classId) && str(student.className)) {
       student.classId = buildSlug(student.className);
     }

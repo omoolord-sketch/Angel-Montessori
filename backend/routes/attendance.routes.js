@@ -4,6 +4,11 @@ const { readDB, writeDB } = require("../lib/jsonStore");
 const { DEFAULT_CLASSES } = require("../lib/defaultClasses");
 const { auth, requireRole } = require("../middleware/auth");
 const { isTeacherRole } = require("../lib/roles");
+const {
+  classIdFromName,
+  ensureAcademicSystemShape,
+  sortAcademicClasses,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -46,13 +51,6 @@ function normalizeStatus(value) {
     .replace(/[^a-z]/g, "");
 
   return STATUS_ALIASES[key] || "";
-}
-
-function classIdFromName(name) {
-  return String(name || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 function ensureAttendanceShape(db) {
@@ -124,19 +122,15 @@ function ensureAttendanceShape(db) {
   }
 
   db.classes = sortClasses(Array.from(byId.values()));
+  ensureAcademicSystemShape(db);
 }
 
 function sortClasses(classes) {
-  return [...(Array.isArray(classes) ? classes : [])].sort((a, b) => {
-    const orderA = Number(a.order ?? 999);
-    const orderB = Number(b.order ?? 999);
-    if (orderA !== orderB) return orderA - orderB;
-    return String(a.name || "").localeCompare(String(b.name || ""));
-  });
+  return sortAcademicClasses(Array.isArray(classes) ? classes : []);
 }
 
 function getClasses(db) {
-  return sortClasses(db.classes || []);
+  return sortClasses((db.classes || []).filter((item) => item.isActive !== false));
 }
 
 function getClassById(db, classId) {

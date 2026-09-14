@@ -3,7 +3,6 @@ const { nanoid } = require("nanoid");
 const { readDB, writeDB } = require("../lib/jsonStore");
 const { auth, requireRole } = require("../middleware/auth");
 const { CLASS_SUBJECTS, SUBJECT_OPTIONS, normalizeSubject } = require("../lib/subjects");
-const { DEFAULT_CLASSES } = require("../lib/defaultClasses");
 const { enrichRequestUser, isTeacherRole, normalizeRole } = require("../lib/roles");
 const {
   ensureAcademicScope,
@@ -12,6 +11,7 @@ const {
   setActiveAcademicScope,
   syncAcademicMirrors,
 } = require("../lib/academicScope");
+const { ensureAcademicSystemShape, sortAcademicClasses } = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -39,14 +39,11 @@ function now() {
 }
 
 function nk(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function cid(name) {
-  return String(name || "")
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function toBool(v, d = false) {
@@ -100,18 +97,9 @@ function ensureDb(db) {
   ensureAcademicScope(db, { currentSession: process.env.CURRENT_SESSION, currentTerm: process.env.CURRENT_TERM });
   changed = true;
 
-  const clsSeen = new Set(db.classes.map((x) => nk(x.name)));
-  for (const row of DEFAULT_CLASSES) {
-    if (clsSeen.has(nk(row.name))) continue;
-    db.classes.push({
-      id: cid(row.name),
-      name: row.name,
-      section: row.section,
-      order: row.order,
-    });
-    clsSeen.add(nk(row.name));
-    changed = true;
-  }
+  const classShapeBefore = JSON.stringify(db.classes || []);
+  ensureAcademicSystemShape(db);
+  if (classShapeBefore !== JSON.stringify(db.classes || [])) changed = true;
 
   if (db.lmsSubjects.length === 0) {
     const t = now();
@@ -136,10 +124,14 @@ function loadDb() {
   return db;
 }
 
+function activeClasses(db) {
+  return sortAcademicClasses((Array.isArray(db.classes) ? db.classes : []).filter((item) => item.isActive !== false));
+}
+
 function cls(db, ref) {
   const v = String(ref || "").trim();
   const key = nk(v);
-  return db.classes.find((x) => String(x.id) === v || nk(x.name) === key) || null;
+  return activeClasses(db).find((x) => String(x.id) === v || nk(x.name) === key) || null;
 }
 
 function subj(db, ref) {
@@ -234,7 +226,7 @@ function canManageClassSubject(db, user, classSubject) {
 }
 
 function visibleClassIds(db, user) {
-  if (isAcademicManager(user) || user.role === "TEACHER") return db.classes.map((x) => String(x.id));
+  if (isAcademicManager(user) || user.role === "TEACHER") return activeClasses(db).map((x) => String(x.id));
   if (user.role === "STUDENT") {
     const p = profile(db, user.studentId);
     return p?.classId ? [String(p.classId)] : [];
@@ -379,7 +371,7 @@ function dashboard(db, user) {
     return {
       role: "ADMIN",
       totals: {
-        totalClasses: db.classes.length,
+        totalClasses: activeClasses(db).length,
         totalSubjectsActive: db.lmsSubjects.filter((x) => String(x.status || "ACTIVE").toUpperCase() === "ACTIVE").length,
         totalTeachersUsingLms: new Set(cs.map((x) => String(x.teacherUserId || "")).filter(Boolean)).size,
         totalStudentsActive: db.students.length,
@@ -473,7 +465,7 @@ router.get("/metadata", (req, res) => {
   const teachers = db.users.filter((x) => isTeacherRole(x.role)).map((x) => ({ id: x.id, name: x.name, username: x.username, role: x.role, subjects: x.subjects || [] }));
   res.json({
     role: req.user.role,
-    classes: [...db.classes].sort((a, b) => Number(a.order || 999) - Number(b.order || 999)),
+    classes: activeClasses(db),
     sessions: db.lmsSessions,
     terms: db.lmsTerms,
     subjects: db.lmsSubjects,
@@ -699,7 +691,7 @@ router.post("/setup/seed-class-subjects", requireRole("ADMIN", "ACADEMIC_OFFICER
   const termId = String(req.body?.termId || activeTerm(db, sessionId)?.id || "");
   if (!sessionId || !termId) return res.status(400).json({ message: "sessionId and termId are required" });
   let created = 0;
-  for (const c of db.classes) {
+  for (const c of activeClasses(db)) {
     const catalogKey = Object.keys(CLASS_SUBJECTS).find((k) => nk(k) === nk(c.name));
     const subjects = catalogKey ? CLASS_SUBJECTS[catalogKey] : [];
     for (const name of subjects) {

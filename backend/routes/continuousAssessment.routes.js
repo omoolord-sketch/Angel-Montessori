@@ -5,6 +5,12 @@ const { readDB, writeDB } = require("../lib/jsonStore");
 const { DEFAULT_CLASSES } = require("../lib/defaultClasses");
 const { SUBJECT_OPTIONS, getSubjectsForClassName, normalizeSubject } = require("../lib/subjects");
 const { ensureAcademicScope } = require("../lib/academicScope");
+const {
+  ensureAcademicSystemShape,
+  sortAcademicClasses,
+  supportsNigerianCA,
+  getClassCapabilitySummary,
+} = require("../lib/academicSystems");
 
 const router = express.Router();
 
@@ -121,6 +127,10 @@ function ensureAcademicMeta(db) {
     mutated = true;
   });
 
+  const classShapeBefore = JSON.stringify(db.classes || []);
+  ensureAcademicSystemShape(db);
+  if (classShapeBefore !== JSON.stringify(db.classes || [])) mutated = true;
+
   return mutated;
 }
 
@@ -191,7 +201,11 @@ function writeIfNeeded(db, mutated) {
 }
 
 function classes(db) {
-  return [...(db.classes || [])].sort((a, b) => Number(a.order || 999) - Number(b.order || 999) || s(a.name).localeCompare(s(b.name)));
+  return sortAcademicClasses(db.classes || []);
+}
+
+function activeClasses(db) {
+  return classes(db).filter((item) => item.isActive !== false && supportsNigerianCA(item));
 }
 
 function findClass(db, value) {
@@ -317,6 +331,11 @@ function validateScore(errors, label, value, max, required) {
 function buildAssessmentPayload(db, base, input, actor, { submit = false } = {}) {
   const cls = findClass(db, input.classId || input.className || base?.classId || base?.className);
   if (!cls) throw new Error("Class is required");
+  if (!supportsNigerianCA(cls)) {
+    const err = new Error("Early Years classes use EYFS AMES developmental assessment, not Nigerian continuous assessment scores.");
+    err.status = 400;
+    throw err;
+  }
 
   const session = findSession(db, input.sessionId || input.academicSessionId || input.sessionName || input.session || base?.sessionId || base?.sessionName);
   if (!session) throw new Error("Academic session is required");
@@ -637,11 +656,20 @@ router.get("/metadata", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_OF
   writeIfNeeded(db, mutated);
 
   return res.json({
-    classes: classes(db).map((item) => ({ id: s(item.id), name: s(item.name), section: s(item.section || inferSectionFromClassName(item.name)), order: Number(item.order || 999) })),
+    classes: activeClasses(db).map((item) => ({
+      id: s(item.id),
+      name: s(item.name),
+      section: s(item.section || inferSectionFromClassName(item.name)),
+      order: Number(item.order || item.displayOrder || 999),
+      academicSystem: s(item.academicSystem),
+      curriculumFramework: s(item.curriculumFramework),
+      assessmentFramework: s(item.assessmentFramework),
+      capabilities: getClassCapabilitySummary(item),
+    })),
     sessions: db.academicSessions || [],
     terms: db.terms || [],
     subjects: SUBJECT_OPTIONS,
-    classSubjects: Object.fromEntries(classes(db).map((cls) => [cls.name, getSubjectsForClassName(cls.name)])),
+    classSubjects: Object.fromEntries(activeClasses(db).map((cls) => [cls.name, getSubjectsForClassName(cls.name)])),
     students: (db.students || []).map((item) => ({ id: s(item.id), name: s(item.name), classId: s(item.classId), className: s(item.className), isArchived: Boolean(item.isArchived || key(item.status) === "archived") })),
     settings: db.assessmentSettings || [],
     gradingScales: db.continuousAssessmentGradingScales || [],
@@ -660,6 +688,11 @@ router.get("/entry", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFIC
   if (!cls || !session || !term || !subject) {
     writeIfNeeded(db, mutated);
     return res.status(400).json({ message: "classId, sessionId, termId and subject are required" });
+  }
+
+  if (!supportsNigerianCA(cls)) {
+    writeIfNeeded(db, mutated);
+    return res.status(400).json({ message: "Early Years classes use EYFS AMES developmental assessment, not Nigerian continuous assessment scores." });
   }
 
   if (!subjectAllowedForTeacher(req.user, subject)) {
@@ -798,7 +831,8 @@ router.post("/entry", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFI
   }
 
   writeDB(db);
-  return res.status(errors.length ? 207 : 200).json({ saved, errors });
+  const status = errors.length && saved.length ? 207 : errors.length ? 400 : 200;
+  return res.status(status).json({ saved, errors });
 });
 
 router.get("/records", auth(), requireRole("ADMIN", "SUPER_ADMIN", "ACADEMIC_OFFICER", "TEACHER"), (req, res) => {
